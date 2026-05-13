@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  CLINICIAN
+  STAFF
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum RecallCampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PHONE
+}
+
+enum NotificationStatus {
+  DRAFT
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+model Tenant {
+  id           String                @id @default(cuid())
+  name         String
+  slug         String                @unique
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  memberships  Membership[]
+  patients     Patient[]
+  appointments Appointment[]
+  campaigns    RecallCampaign[]
+  messages     NotificationMessage[]
+  auditLogs    AuditLog[]
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+  auditLogs   AuditLog[]
+}
+
+model Membership {
+  id        String         @id @default(cuid())
+  tenantId  String
+  userId    String
+  role      MembershipRole @default(STAFF)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+}
+
+model Patient {
+  id                     String                @id @default(cuid())
+  tenantId               String
+  externalRef            String?
+  firstName              String
+  lastName               String
+  email                  String?
+  phone                  String?
+  dateOfBirth            DateTime?
+  acceptsEmail           Boolean               @default(true)
+  acceptsSms             Boolean               @default(false)
+  lastVisitAt            DateTime?
+  nextRecallDueAt        DateTime?
+  isActive               Boolean               @default(true)
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  tenant                 Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments           Appointment[]
+  recallCampaigns        RecallCampaign[]
+  notificationMessages   NotificationMessage[]
+
+  @@index([tenantId, lastName, firstName])
+  @@index([tenantId, nextRecallDueAt])
+}
+
+model Appointment {
+  id                   String                @id @default(cuid())
+  tenantId             String
+  patientId            String
+  startsAt             DateTime
+  endsAt               DateTime?
+  status               AppointmentStatus     @default(SCHEDULED)
+  cancellationReason   String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient              Patient               @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  notificationMessages NotificationMessage[]
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, patientId])
+}
+
+model RecallCampaign {
+  id        String               @id @default(cuid())
+  tenantId  String
+  patientId String?
+  name      String
+  status    RecallCampaignStatus @default(DRAFT)
+  startsAt  DateTime?
+  endedAt   DateTime?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  tenant    Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient   Patient?             @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  messages  NotificationMessage[]
+
+  @@index([tenantId, status])
+}
+
+model NotificationMessage {
+  id                String             @id @default(cuid())
+  tenantId          String
+  patientId         String?
+  appointmentId     String?
+  recallCampaignId  String?
+  channel           NotificationChannel
+  status            NotificationStatus  @default(DRAFT)
+  recipientHash     String?
+  subject           String?
+  bodyPreview       String?
+  providerMessageId String?
+  scheduledFor      DateTime?
+  sentAt            DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient           Patient?            @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  appointment       Appointment?        @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  recallCampaign    RecallCampaign?     @relation(fields: [recallCampaignId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, scheduledFor])
+  @@index([tenantId, patientId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String
+  actorUserId String?
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor      User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, action])
+}

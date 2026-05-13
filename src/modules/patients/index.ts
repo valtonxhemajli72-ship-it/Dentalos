@@ -1,0 +1,9 @@
+export type PatientLifecycleStatus = "active" | "due_for_recall" | "overdue" | "inactive";
+
+export type PatientSummary = {
+  id: string;
+  tenantId: string;
+  displayName: string;
+  status: PatientLifecycleStatus;
+  nextRecallDueAt?: Date;
+};
