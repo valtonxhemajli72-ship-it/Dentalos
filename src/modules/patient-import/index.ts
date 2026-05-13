@@ -1,3 +1,4 @@
+import { maskEmail, maskPhone } from "@/lib/privacy";
 import type { RecallContactChannel } from "@/modules/patients/recall";
 
 export type PatientImportColumn =
@@ -17,6 +18,7 @@ export type PatientImportIssueCode =
   | "invalid_date"
   | "duplicate_email"
   | "duplicate_phone"
+  | "duplicate_identity"
   | "unsupported_contact_channel";
 
 export type PatientImportParsedRow = {
@@ -67,6 +69,7 @@ export type PatientImportSummary = {
   invalidRowCount: number;
   duplicateEmailCount: number;
   duplicatePhoneCount: number;
+  duplicateRowCount: number;
   emailCount: number;
   phoneCount: number;
 };
@@ -200,6 +203,7 @@ export function validatePatientImportRows(
   const issues: PatientImportIssue[] = [];
   const emailRows = new Map<string, number[]>();
   const phoneRows = new Map<string, number[]>();
+  const identityRows = new Map<string, number[]>();
 
   rows.forEach((row) => {
     if (isEmptyImportRow(row)) {
@@ -231,6 +235,7 @@ export function validatePatientImportRows(
 
     addDuplicateCandidate(emailRows, row.email, row.rowNumber);
     addDuplicateCandidate(phoneRows, normalizedPhoneKey(row.phone), row.rowNumber);
+    addDuplicateCandidate(identityRows, normalizedIdentityKey(row), row.rowNumber);
 
     validateDateField(row, "lastVisitDate", issues);
     validateDateField(row, "nextAppointmentDate", issues);
@@ -250,6 +255,13 @@ export function validatePatientImportRows(
 
   appendDuplicateIssues(emailRows, issues, "duplicate_email", "email", "Email is duplicated.");
   appendDuplicateIssues(phoneRows, issues, "duplicate_phone", "phone", "Phone is duplicated.");
+  appendDuplicateIssues(
+    identityRows,
+    issues,
+    "duplicate_identity",
+    "lastVisitDate",
+    "Patient name and last visit date are duplicated.",
+  );
 
   const issuesByRow = groupIssuesByRow(issues);
   const validRows = rows.filter((row) => !issuesByRow.has(row.rowNumber));
@@ -266,6 +278,14 @@ export function summarizePatientImport(
   rows: PatientImportNormalizedRow[],
   validation: PatientImportValidationResult,
 ): PatientImportSummary {
+  const duplicateRowNumbers = new Set(
+    validation.issues
+      .filter((issue) =>
+        ["duplicate_email", "duplicate_phone", "duplicate_identity"].includes(issue.code),
+      )
+      .map((issue) => issue.rowNumber),
+  );
+
   return {
     rowCount: rows.length,
     validRowCount: validation.validRows.length,
@@ -274,10 +294,13 @@ export function summarizePatientImport(
       .length,
     duplicatePhoneCount: validation.issues.filter((issue) => issue.code === "duplicate_phone")
       .length,
+    duplicateRowCount: duplicateRowNumbers.size,
     emailCount: rows.filter((row) => Boolean(row.email)).length,
     phoneCount: rows.filter((row) => Boolean(row.phone)).length,
   };
 }
+
+export type PatientImportClientPreview = Omit<PatientImportPreview, "drafts">;
 
 export function createPatientImportPreview(csvText: string): PatientImportPreview {
   const parsedRows = parsePatientImportCsv(csvText);
@@ -298,6 +321,16 @@ export function createPatientImportPreview(csvText: string): PatientImportPrevie
     })),
     issues: validation.issues,
     drafts: validation.validRows.map(mapImportRowToPatientDraft),
+  };
+}
+
+export function createPatientImportClientPreview(csvText: string): PatientImportClientPreview {
+  const preview = createPatientImportPreview(csvText);
+
+  return {
+    summary: preview.summary,
+    rows: preview.rows,
+    issues: preview.issues,
   };
 }
 
@@ -425,6 +458,26 @@ function normalizedPhoneKey(phone: string | undefined): string | undefined {
   return digits && digits.length >= 7 ? digits : undefined;
 }
 
+export function normalizedPatientImportPhoneKey(phone: string | undefined): string | undefined {
+  return normalizedPhoneKey(phone);
+}
+
+export function normalizedPatientImportIdentityKey(
+  row: Pick<PatientImportNormalizedRow, "firstName" | "lastName" | "lastVisitDate">,
+): string | undefined {
+  return normalizedIdentityKey(row);
+}
+
+function normalizedIdentityKey(
+  row: Pick<PatientImportNormalizedRow, "firstName" | "lastName" | "lastVisitDate">,
+): string | undefined {
+  if (!row.firstName || !row.lastName || !row.lastVisitDate) {
+    return undefined;
+  }
+
+  return `${row.firstName.toLowerCase()}|${row.lastName.toLowerCase()}|${row.lastVisitDate}`;
+}
+
 function validateDateField(
   row: PatientImportNormalizedRow,
   field: "lastVisitDate" | "nextAppointmentDate",
@@ -449,8 +502,8 @@ function validateDateField(
 function appendDuplicateIssues(
   candidates: Map<string, number[]>,
   issues: PatientImportIssue[],
-  code: "duplicate_email" | "duplicate_phone",
-  field: "email" | "phone",
+  code: "duplicate_email" | "duplicate_phone" | "duplicate_identity",
+  field: PatientImportColumn,
   message: string,
 ) {
   candidates.forEach((rowNumbers) => {
@@ -496,18 +549,6 @@ function buildContactIndicators(row: PatientImportNormalizedRow): string[] {
   }
 
   return indicators.length > 0 ? indicators : ["No contact method"];
-}
-
-function maskEmail(email: string): string {
-  const [localPart, domain] = email.split("@");
-  const visible = localPart.slice(0, 1);
-  return `${visible}***@${domain}`;
-}
-
-function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  const suffix = digits.slice(-2);
-  return suffix ? `Phone ending ${suffix}` : "Phone provided";
 }
 
 function inferContactChannel(row: PatientImportNormalizedRow): RecallContactChannel {

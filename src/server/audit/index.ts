@@ -1,43 +1,83 @@
+import {
+  assertNoPIIInAuditMetadata,
+  type AuditMetadataRecord,
+  type AuditMetadataValue,
+} from "@/lib/privacy";
 import { requireTenantId, type TenantContext } from "@/modules/tenants";
 
 export type AuditAction =
   | "patient_import.previewed"
   | "patient_import.validated"
   | "patient_import.imported"
+  | "patient_import.failed"
+  | "recall_candidates.viewed"
   | "recall_campaign.prepared";
 
-export type AuditMetadata = Record<string, number | string | boolean | null | undefined>;
+export type AuditMetadata = Record<string, AuditMetadataValue>;
 
 export type AuditEvent = {
   tenantId: string;
   actorUserId?: string;
   action: AuditAction;
-  entityType?: string;
+  entityType: string;
   entityId?: string;
   metadata?: AuditMetadata;
   createdAt: Date;
 };
 
-const unsafeMetadataKeyPattern = /(name|email|phone|note|message|body|raw|csv|contactValue)/i;
+export type AuditLogDatabase = {
+  auditLog: {
+    create(args: Record<string, unknown>): Promise<unknown>;
+  };
+};
+
+export function sanitizeAuditMetadata(metadata: AuditMetadata | undefined): AuditMetadata {
+  const sanitized = Object.entries(metadata ?? {}).reduce<AuditMetadata>(
+    (current, [key, value]) => {
+      if (value === undefined) {
+        return current;
+      }
+
+      current[key] = value;
+      return current;
+    },
+    {},
+  );
+
+  assertNoPIIInAuditMetadata(sanitized as AuditMetadataRecord);
+  return sanitized;
+}
 
 export function createAuditEvent(input: {
   tenant: TenantContext;
   action: AuditAction;
-  entityType?: string;
+  entityType: string;
   entityId?: string;
   metadata?: AuditMetadata;
 }): AuditEvent {
-  assertSafeAuditMetadata(input.metadata);
-
   return {
     tenantId: requireTenantId(input.tenant),
     actorUserId: input.tenant.userId,
     action: input.action,
     entityType: input.entityType,
     entityId: input.entityId,
-    metadata: input.metadata,
+    metadata: sanitizeAuditMetadata(input.metadata),
     createdAt: new Date(),
   };
+}
+
+export async function writeAuditEvent(db: AuditLogDatabase, event: AuditEvent): Promise<void> {
+  await db.auditLog.create({
+    data: {
+      tenantId: event.tenantId,
+      actorUserId: event.actorUserId,
+      action: event.action,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      metadata: event.metadata ?? {},
+      createdAt: event.createdAt,
+    },
+  });
 }
 
 export function createPatientImportPreviewedAuditEvent(
@@ -69,13 +109,44 @@ export function createPatientImportValidatedAuditEvent(
 export function createPatientImportImportedAuditEvent(
   tenant: TenantContext,
   batchId: string,
-  metadata: { importedCount: number; skippedCount: number },
+  metadata: {
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+    duplicateRows: number;
+    createdPatients: number;
+    skippedRows: number;
+  },
 ): AuditEvent {
   return createAuditEvent({
     tenant,
     action: "patient_import.imported",
     entityType: "PatientImportBatch",
     entityId: batchId,
+    metadata,
+  });
+}
+
+export function createPatientImportFailedAuditEvent(
+  tenant: TenantContext,
+  metadata: { totalRows: number; validRows: number; invalidRows: number; duplicateRows: number },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "patient_import.failed",
+    entityType: "PatientImportBatch",
+    metadata,
+  });
+}
+
+export function createRecallCandidatesViewedAuditEvent(
+  tenant: TenantContext,
+  metadata: { candidateCount: number; source: "database" | "demo" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_candidates.viewed",
+    entityType: "Patient",
     metadata,
   });
 }
@@ -91,13 +162,5 @@ export function createRecallCampaignPreparedAuditEvent(
     entityType: "RecallCampaign",
     entityId: campaignId,
     metadata,
-  });
-}
-
-function assertSafeAuditMetadata(metadata: AuditMetadata | undefined) {
-  Object.keys(metadata ?? {}).forEach((key) => {
-    if (unsafeMetadataKeyPattern.test(key)) {
-      throw new Error(`Audit metadata key is not allowed: ${key}`);
-    }
   });
 }

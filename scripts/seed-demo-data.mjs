@@ -2,33 +2,33 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const tenantId = "tenant_demo_riverside";
-const userId = "user_demo_owner";
+const tenantId = "tenant_demo_klinika360";
+const userId = "user_demo_klinika360_owner";
 
 async function main() {
   await prisma.tenant.upsert({
     where: { id: tenantId },
     update: {
-      name: "Riverside Demo Dental",
-      slug: "riverside-demo",
+      name: "Klinika360",
+      slug: "klinika360-demo",
     },
     create: {
       id: tenantId,
-      name: "Riverside Demo Dental",
-      slug: "riverside-demo",
+      name: "Klinika360",
+      slug: "klinika360-demo",
     },
   });
 
   await prisma.user.upsert({
     where: { id: userId },
     update: {
-      email: "owner@example.test",
-      name: "Demo Owner",
+      email: "demo-user@example.test",
+      name: "Klinika360 Demo User",
     },
     create: {
       id: userId,
-      email: "owner@example.test",
-      name: "Demo Owner",
+      email: "demo-user@example.test",
+      name: "Klinika360 Demo User",
     },
   });
 
@@ -43,7 +43,7 @@ async function main() {
       role: "OWNER",
     },
     create: {
-      id: "membership_demo_owner",
+      id: "membership_demo_klinika360_owner",
       tenantId,
       userId,
       role: "OWNER",

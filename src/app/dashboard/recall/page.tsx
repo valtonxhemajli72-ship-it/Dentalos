@@ -2,9 +2,28 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { createPatientImportPreview, patientImportExampleCsv } from "@/modules/patient-import";
-import { getDemoRecallWorkspaceSnapshot } from "@/modules/patients/recall-demo-data";
-import type { RecallAction, RecallQueueItem, RecallStatus } from "@/modules/patients/recall";
+import {
+  createPatientImportClientPreview,
+  patientImportExampleCsv,
+} from "@/modules/patient-import";
+import { getLatestPatientImportBatchForTenant } from "@/modules/patient-import/repository";
+import {
+  listDemoRecallCandidatesForTenant,
+  listRecallCandidatesForTenant,
+  type PatientRepositoryDatabase,
+} from "@/modules/patients/repository";
+import {
+  buildRecallWorkspaceSnapshot,
+  type RecallAction,
+  type RecallQueueItem,
+  type RecallStatus,
+} from "@/modules/patients/recall";
+import { demoTenantContext, requireSession } from "@/server/auth";
+import { createRecallCandidatesViewedAuditEvent, writeAuditEvent } from "@/server/audit";
+import { getPrismaClient } from "@/server/db";
+import type { PatientImportRepositoryDatabase } from "@/modules/patient-import/repository";
+
+export const dynamic = "force-dynamic";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   month: "short",
@@ -37,9 +56,9 @@ const actionLabels: Record<RecallAction, string> = {
   wait: "Wait",
 };
 
-export default function RecallDashboardPage() {
-  const snapshot = getDemoRecallWorkspaceSnapshot();
-  const importPreview = createPatientImportPreview(patientImportExampleCsv);
+export default async function RecallDashboardPage() {
+  const data = await getRecallPageData();
+  const snapshot = buildRecallWorkspaceSnapshot(data.candidates, data.asOf);
   const actionablePatients = snapshot.queue.filter((item) =>
     ["call_to_schedule", "send_recall_message", "send_gentle_nudge"].includes(
       item.recommendedAction,
@@ -52,7 +71,7 @@ export default function RecallDashboardPage() {
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge>Recall MVP</Badge>
+            <Badge>{data.tenantName}</Badge>
             <h1 className="mt-3 text-3xl font-semibold text-ink">Patient recall queue</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               Prioritize patients who are due or overdue, separate safe campaign work from manual
@@ -76,14 +95,21 @@ export default function RecallDashboardPage() {
         </div>
       </div>
 
-      <section className="grid gap-4 p-6 pb-0 md:grid-cols-3 lg:p-8 lg:pb-0">
+      <section className="grid gap-4 p-6 pb-0 md:grid-cols-4 lg:p-8 lg:pb-0">
+        <Card>
+          <p className="text-sm font-semibold text-ink">Data source</p>
+          <p className="mt-3 text-2xl font-semibold text-brand-700">{data.source}</p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Demo fallback appears only when database access is unavailable.
+          </p>
+        </Card>
         <Card>
           <p className="text-sm font-semibold text-ink">Import readiness</p>
           <p className="mt-3 text-2xl font-semibold text-brand-700">
-            {importPreview.summary.validRowCount} drafts
+            {data.importReadiness.validRowCount} drafts
           </p>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Demo CSV preview has {importPreview.summary.invalidRowCount} rows needing cleanup.
+            Last import status: {data.importReadiness.status}.
           </p>
         </Card>
         <Card>
@@ -117,7 +143,7 @@ export default function RecallDashboardPage() {
           <div className="border-b border-line px-5 py-4">
             <h2 className="text-base font-semibold text-ink">Prioritized recall worklist</h2>
             <p className="mt-1 text-sm text-muted">
-              Demo queue calculated as of {dateFormatter.format(snapshot.asOf)}.
+              Queue calculated as of {dateFormatter.format(snapshot.asOf)}.
             </p>
           </div>
 
@@ -137,6 +163,14 @@ export default function RecallDashboardPage() {
                 {snapshot.queue.map((patient) => (
                   <RecallTableRow key={patient.id} patient={patient} />
                 ))}
+                {snapshot.queue.length === 0 ? (
+                  <tr>
+                    <td className="px-5 py-6 text-sm text-muted" colSpan={6}>
+                      No recall candidates found for this tenant. Import patients to start the
+                      review queue.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -169,21 +203,12 @@ export default function RecallDashboardPage() {
               >
                 Prepare campaign draft
               </button>
-              {!hasPatients ? (
-                <Link
-                  href="/dashboard/import"
-                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
-                >
-                  Import patients first
-                </Link>
-              ) : (
-                <Link
-                  href="/dashboard/import"
-                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
-                >
-                  Review import data
-                </Link>
-              )}
+              <Link
+                href="/dashboard/import"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
+              >
+                {hasPatients ? "Review import data" : "Import patients first"}
+              </Link>
             </div>
           </Card>
 
@@ -210,6 +235,85 @@ export default function RecallDashboardPage() {
       </section>
     </DashboardShell>
   );
+}
+
+type RecallPageData = {
+  asOf: Date;
+  candidates: Parameters<typeof buildRecallWorkspaceSnapshot>[0];
+  source: "database" | "demo";
+  tenantName: string;
+  importReadiness: {
+    status: string;
+    rowCount: number;
+    validRowCount: number;
+    invalidRowCount: number;
+  };
+};
+
+async function getRecallPageData(): Promise<RecallPageData> {
+  const session = await requireSession();
+  const tenant = session.activeTenant ?? demoTenantContext;
+  const asOf = new Date();
+
+  try {
+    const db = getPrismaClient();
+    const [candidates, latestImport] = await Promise.all([
+      listRecallCandidatesForTenant(tenant.tenantId, asOf, {
+        db: db as unknown as PatientRepositoryDatabase,
+      }),
+      getLatestPatientImportBatchForTenant(tenant.tenantId, {
+        db: db as unknown as PatientImportRepositoryDatabase,
+      }),
+    ]);
+
+    try {
+      await writeAuditEvent(
+        db,
+        createRecallCandidatesViewedAuditEvent(tenant, {
+          candidateCount: candidates.length,
+          source: "database",
+        }),
+      );
+    } catch {
+      // Recall viewing must not fail just because audit persistence is unavailable locally.
+    }
+
+    return {
+      asOf,
+      candidates,
+      source: "database",
+      tenantName: tenant.tenantName ?? "Selected clinic",
+      importReadiness: latestImport
+        ? {
+            status: latestImport.status,
+            rowCount: latestImport.rowCount,
+            validRowCount: latestImport.validRowCount,
+            invalidRowCount: latestImport.invalidRowCount,
+          }
+        : {
+            status: "No import batch",
+            rowCount: 0,
+            validRowCount: 0,
+            invalidRowCount: 0,
+          },
+    };
+  } catch {
+    const demoPreview = createPatientImportClientPreview(patientImportExampleCsv);
+    const candidates = listDemoRecallCandidatesForTenant(tenant.tenantId);
+
+    return {
+      asOf,
+      candidates,
+      source: "demo",
+      tenantName: tenant.tenantName ?? "Selected clinic",
+      importReadiness: {
+        status: "Demo preview",
+        rowCount: demoPreview.summary.rowCount,
+        validRowCount: demoPreview.summary.validRowCount,
+        invalidRowCount: demoPreview.summary.invalidRowCount,
+      },
+    };
+  }
 }
 
 type MetricCardProps = {

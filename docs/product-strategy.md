@@ -1,10 +1,10 @@
-# DentalOS Product Strategy
+# Klinika360 Product Strategy
 
 ## Why Recall, Follow-Up, and No-Show Reduction First
 
 Dental clinics feel patient leakage every week: overdue hygiene visits, forgotten appointments, unconfirmed bookings, incomplete follow-ups, and dormant patients who need a timely reason to come back. These workflows are operational, measurable, and painful enough for a focused SaaS wedge.
 
-The wedge creates value before DentalOS becomes a full clinic operating system.
+The wedge creates value before Klinika360 becomes a full clinic operating system.
 
 ## Buyer Pain Points
 
@@ -51,4 +51,4 @@ Avoid promising medical outcomes or exaggerated financial results. Measure workf
 
 ## Sales-Oriented Value Proposition
 
-DentalOS helps clinics run a tighter patient follow-up operation: know who needs attention, send the right reminders, track what happened, and keep the schedule healthier without asking staff to manage another messy spreadsheet.
+Klinika360 helps clinics run a tighter patient follow-up operation: know who needs attention, prepare the right reminders, track what happened, and keep the schedule healthier without asking staff to manage another messy spreadsheet.

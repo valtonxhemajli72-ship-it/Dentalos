@@ -1,4 +1,10 @@
-export const appName = "DentalOS";
+export const APP_NAME = "Klinika360";
+export const DEMO_TENANT_NAME = "Klinika360";
+export const INTERNAL_PROJECT_NAME = "DentalOS";
+export const APP_DESCRIPTION =
+  "A secure multi-tenant SaaS platform for dental clinic recall, reminders, follow-up, and patient reactivation workflows.";
+
+export const appName = APP_NAME;
 
 export const wedgeCapabilities = [
   {

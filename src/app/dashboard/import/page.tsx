@@ -2,19 +2,25 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { PatientImportWorkflow } from "@/app/dashboard/import/patient-import-workflow";
+import { requireSession } from "@/server/auth";
 
-export default function PatientImportPage() {
+export const dynamic = "force-dynamic";
+
+export default async function PatientImportPage() {
+  const session = await requireSession();
+  const tenantName = session.activeTenant?.tenantName ?? "Selected clinic";
+
   return (
     <DashboardShell>
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge>Patient onboarding</Badge>
+            <Badge>{tenantName}</Badge>
             <h1 className="mt-3 text-3xl font-semibold text-ink">Import patient list</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               Paste a clinic CSV, preview patient drafts, and prepare the data needed for recall
-              automation. This MVP keeps import review local until real auth, tenant persistence,
-              and audit logging are connected.
+              automation. Valid rows can be saved to the tenant database when a local database is
+              configured; raw CSV content is never stored.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">

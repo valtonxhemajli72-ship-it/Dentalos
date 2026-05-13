@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { wedgeCapabilities } from "@/lib/constants";
+import { APP_NAME, wedgeCapabilities } from "@/lib/constants";
 
 const workflowRows = [
   { label: "Due for recall", count: "42", tone: "bg-brand-50 text-brand-700" },
@@ -20,7 +20,7 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <Badge>Recall, reminders, and follow-up</Badge>
             <h1 className="mt-6 text-4xl font-semibold leading-tight text-ink sm:text-5xl">
-              DentalOS
+              {APP_NAME}
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">
               A multi-tenant clinic operating system starting with the workflows that keep patients
@@ -46,7 +46,7 @@ export default function HomePage() {
           <div className="rounded-lg border border-line bg-surface p-4 shadow-soft">
             <div className="rounded-md border border-line bg-white">
               <div className="border-b border-line px-4 py-3">
-                <p className="text-sm font-semibold text-ink">Today at Riverside Dental</p>
+                <p className="text-sm font-semibold text-ink">Today at Klinika360</p>
                 <p className="text-xs text-muted">Operational follow-up queue</p>
               </div>
               <div className="divide-y divide-line">
@@ -86,7 +86,7 @@ export default function HomePage() {
           <div className="max-w-2xl">
             <h2 className="text-2xl font-semibold text-ink">Built for a serious SaaS foundation</h2>
             <p className="mt-3 text-sm leading-6 text-muted">
-              The first slice stays focused on recall and reminders while the codebase is prepared
+              The first slice stays focused on recall and reminders while the platform is prepared
               for tenants, patients, appointments, notifications, billing, reports, integrations,
               and AI-assisted workflows.
             </p>

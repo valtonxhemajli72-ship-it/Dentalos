@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_NAME } from "@/lib/constants";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -14,7 +15,7 @@ export function SiteHeader() {
     <header className="border-b border-line bg-white">
       <div className="mx-auto flex min-h-16 max-w-7xl flex-col items-start justify-between gap-3 px-6 py-3 sm:flex-row sm:items-center lg:px-8">
         <Link href="/" className="text-base font-semibold text-ink">
-          DentalOS
+          {APP_NAME}
         </Link>
         <nav aria-label="Primary navigation" className="flex flex-wrap items-center gap-1">
           {navItems.map((item) => (
