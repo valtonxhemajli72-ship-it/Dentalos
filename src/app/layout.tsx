@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DentalOS",
-  description: "A clinic operating system starting with recall, reminders, and follow-up.",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
 };
 
 type RootLayoutProps = {

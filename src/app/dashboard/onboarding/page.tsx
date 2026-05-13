@@ -2,6 +2,10 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { APP_NAME } from "@/lib/constants";
+import { requireSession } from "@/server/auth";
+
+export const dynamic = "force-dynamic";
 
 const onboardingSteps = [
   {
@@ -38,14 +42,16 @@ const onboardingSteps = [
   },
 ];
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  await requireSession();
+
   return (
     <DashboardShell>
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <Badge>Pilot onboarding</Badge>
         <h1 className="mt-3 text-3xl font-semibold text-ink">Clinic onboarding workflow</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-          A practical four-step path for showing a clinic how DentalOS turns a patient list into a
+          A practical four-step path for showing a clinic how {APP_NAME} turns a patient list into a
           recall follow-up queue. Real authentication, sending, payments, and AI calls are not part
           of this MVP flow.
         </p>

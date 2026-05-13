@@ -1,6 +1,6 @@
-# DentalOS Security Baseline
+# Klinika360 Security Baseline
 
-DentalOS handles sensitive clinic and patient operations. Build with privacy and tenant isolation as default product behavior.
+Klinika360 handles sensitive clinic and patient operations. Build with privacy and tenant isolation as default product behavior.
 
 ## Secret Handling
 
@@ -49,6 +49,8 @@ Audit records should capture:
 Audit logs should cover authentication-sensitive actions, membership changes, exports, notification sends, AI-assisted actions, and billing events.
 
 Patient import audit metadata must use counts and identifiers only, such as row counts, valid row counts, invalid row counts, and import batch IDs. Do not store raw names, emails, phone numbers, notes, message bodies, or CSV content in audit metadata.
+
+Import persistence must store only normalized patient records and import counts. Raw pasted CSV is never stored.
 
 ## Data Retention Notes
 

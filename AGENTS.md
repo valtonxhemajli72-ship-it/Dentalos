@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository is for DentalOS, a multi-tenant SaaS product for dental clinics. The first sellable wedge is patient recall, appointment reminders, follow-up automation, no-show reduction, and patient reactivation. The long-term product can expand into patients, appointments, documents, billing, notifications, reports, integrations, and AI-assisted workflows.
+This repository is DentalOS, the internal codebase for Klinika360, a multi-tenant SaaS product for dental clinics. The first sellable wedge is patient recall, appointment reminders, follow-up automation, no-show reduction, and patient reactivation. The long-term product can expand into patients, appointments, documents, billing, notifications, reports, integrations, and AI-assisted workflows.
 
 ## Working Principles
 
@@ -26,6 +26,7 @@ This repository is for DentalOS, a multi-tenant SaaS product for dental clinics.
 - DentalOS MVP uses a shared app and shared PostgreSQL database with `tenantId` on tenant-owned records.
 - Tenant-owned data must include `tenantId` and be queried through tenant-aware access paths.
 - No fetch, update, delete, list, import, export, event, or job operation for tenant-owned data may run without tenant context.
+- Patient imports create `PatientImportBatch` records with counts only; never store raw CSV content.
 - Private routes must resolve authenticated user and active tenant before accessing tenant data.
 - Never trust tenant IDs from the client without checking membership and permissions.
 - Background jobs and event handlers must carry tenant context explicitly.
@@ -76,6 +77,7 @@ Review every change with these questions:
 - Are permissions checked before sensitive reads or writes?
 - Could this log PII or secrets?
 - Does audit metadata contain counts and identifiers only?
+- Does patient import persistence skip duplicates conservatively and stay tenant-scoped?
 - Does this fail safely?
 - Are background jobs tenant-aware and idempotent?
 - Is AI output validated and reviewed before action?

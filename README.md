@@ -1,6 +1,6 @@
-# DentalOS
+# Klinika360
 
-DentalOS is a multi-tenant SaaS platform for dental clinics. The long-term vision is a clinic operating system, starting with a focused wedge product for patient recall, appointment reminders, follow-up automation, no-show reduction, and patient reactivation.
+Klinika360 is a multi-tenant SaaS platform for dental clinics. DentalOS remains the internal repository codename. The long-term vision is a clinic operating system, starting with a focused wedge product for patient recall, appointment reminders, follow-up automation, no-show reduction, and patient reactivation.
 
 The first version should help a clinic consistently bring patients back into care without adding more manual work to the front desk.
 
@@ -83,7 +83,7 @@ DentalOS is a modular monolith first. Product UI, application logic, domain modu
 
 The MVP tenancy model is a shared app and shared PostgreSQL database. Every tenant-owned record must be modeled with `tenantId`, and every tenant-owned query must include tenant context. Private routes must require authentication and tenant resolution before data access. AI is an assistant layer that suggests drafts or actions; the system remains the source of truth.
 
-The current patient import workflow helps a clinic paste a CSV, validate rows, preview masked contact indicators, and prepare patient drafts for recall review. It does not persist real data from the UI yet, and it does not send email, SMS, WhatsApp, payment, or AI requests.
+The current patient import workflow helps a clinic paste a CSV, validate rows, preview masked contact indicators, save valid tenant-scoped patient records when a database is configured, and prepare recall review. It creates a `PatientImportBatch` with counts only. It does not store raw CSV content and does not send email, SMS, WhatsApp, payment, or AI requests.
 
 See:
 
@@ -104,6 +104,7 @@ See:
 
 - Never expose secrets in code, logs, screenshots, issues, or pull requests.
 - Do not log patient PII.
+- Do not store raw CSV content in import batches or audit metadata.
 - Validate inputs at system boundaries.
 - Fail safely when tenant, permission, or validation context is missing.
 - Treat healthcare and dental data with heightened privacy expectations.
@@ -111,8 +112,8 @@ See:
 ## MVP Roadmap
 
 1. Add authentication and tenant membership.
-2. Replace the demo import and recall queues with tenant-scoped Prisma reads and writes.
-3. Build patient import persistence with audit logs.
+2. Add real authentication and tenant switching.
+3. Build patient import review history and duplicate resolution.
 4. Create recall campaign draft and approval flows.
 5. Add appointment reminder workflows.
 6. Add notification delivery adapters behind safe interfaces.

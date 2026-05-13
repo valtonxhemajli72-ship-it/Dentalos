@@ -1,6 +1,6 @@
-# DentalOS Architecture
+# Klinika360 Architecture
 
-DentalOS starts as a modular monolith: one deployable application with clear internal boundaries. This keeps delivery fast while preserving the option to split infrastructure later if scale or team shape requires it.
+Klinika360 starts as a modular monolith inside the DentalOS repository: one deployable application with clear internal boundaries. This keeps delivery fast while preserving the option to split infrastructure later if scale or team shape requires it.
 
 ## Core Modules
 
@@ -46,6 +46,7 @@ Start simple:
 - Domain events are published through an in-process event bus.
 - External delivery adapters stay behind module boundaries.
 - Patient import stores import batch counts and status only; raw CSV content and unnecessary PII are not stored in import metadata.
+- Patient import persistence writes patients, optional appointments, import batch counts, and safe audit events in a tenant-scoped transaction.
 
 Later:
 

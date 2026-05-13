@@ -2,6 +2,10 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { APP_NAME } from "@/lib/constants";
+import { requireSession } from "@/server/auth";
+
+export const dynamic = "force-dynamic";
 
 const focusCards = [
   {
@@ -16,6 +20,7 @@ const focusCards = [
     label: "patients due",
     detail: "Segment patients by due date, contact preference, and last successful outreach.",
     href: "/dashboard/recall",
+    cta: "Open recall queue",
   },
   {
     title: "Appointment reminders",
@@ -35,6 +40,7 @@ const focusCards = [
     label: "preview workflow",
     detail: "Paste a patient list, validate rows, and prepare recall-ready drafts.",
     href: "/dashboard/import",
+    cta: "Open import workflow",
   },
 ];
 
@@ -45,17 +51,20 @@ const activity = [
   "Audit log placeholder reserved for future sensitive actions.",
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await requireSession();
+  const tenantName = session.activeTenant?.tenantName ?? APP_NAME;
+
   return (
     <DashboardShell>
       <div className="flex flex-col gap-3 border-b border-line bg-white px-6 py-6 lg:px-8">
-        <Badge>Clinic workspace</Badge>
+        <Badge>{tenantName}</Badge>
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
             <h1 className="text-3xl font-semibold text-ink">Follow-up dashboard</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               A focused operating view for recall, reminders, no-show prevention, and patient
-              reactivation. Data shown here is placeholder product scaffolding.
+              reactivation. Data is tenant-scoped when a database is configured.
             </p>
           </div>
           <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-muted">
@@ -79,7 +88,7 @@ export default function DashboardPage() {
                   href={card.href}
                   className="mt-4 inline-flex w-fit text-sm font-semibold text-brand-700 hover:text-brand-600"
                 >
-                  Open recall queue
+                  {card.cta}
                 </Link>
               ) : null}
             </div>

@@ -1,16 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import {
+  persistPatientImportAction,
+  previewPatientImportAction,
+  type PatientImportActionResult,
+} from "@/app/dashboard/import/actions";
 import { Card } from "@/components/ui/card";
 import {
-  createPatientImportPreview,
+  createPatientImportClientPreview,
   patientImportExampleCsv,
-  type PatientImportPreview,
+  type PatientImportClientPreview,
 } from "@/modules/patient-import";
 
 const summaryCards: Array<{
-  key: keyof PatientImportPreview["summary"];
+  key: keyof PatientImportClientPreview["summary"];
   label: string;
 }> = [
   { key: "rowCount", label: "Rows parsed" },
@@ -21,10 +26,11 @@ const summaryCards: Array<{
 
 export function PatientImportWorkflow() {
   const [csvText, setCsvText] = useState(patientImportExampleCsv);
-  const [preview, setPreview] = useState<PatientImportPreview>(() =>
-    createPatientImportPreview(patientImportExampleCsv),
+  const [preview, setPreview] = useState<PatientImportClientPreview>(() =>
+    createPatientImportClientPreview(patientImportExampleCsv),
   );
-  const [saveState, setSaveState] = useState<"idle" | "prepared">("idle");
+  const [actionResult, setActionResult] = useState<PatientImportActionResult | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const canContinue = preview.summary.validRowCount > 0;
   const issueSummary = useMemo(() => {
@@ -51,7 +57,7 @@ export function PatientImportWorkflow() {
             value={csvText}
             onChange={(event) => {
               setCsvText(event.target.value);
-              setSaveState("idle");
+              setActionResult(null);
             }}
             className="mt-2 min-h-72 w-full resize-y rounded-md border border-line bg-white p-4 font-mono text-sm leading-6 text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             spellCheck={false}
@@ -60,20 +66,30 @@ export function PatientImportWorkflow() {
             <button
               type="button"
               onClick={() => {
-                setPreview(createPatientImportPreview(csvText));
-                setSaveState("idle");
+                startTransition(async () => {
+                  const result = await previewPatientImportAction(csvText);
+                  setPreview(result.preview);
+                  setActionResult(result);
+                });
               }}
               className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              disabled={isPending}
             >
               Preview import
             </button>
             <button
               type="button"
-              onClick={() => setSaveState("prepared")}
+              onClick={() => {
+                startTransition(async () => {
+                  const result = await persistPatientImportAction(csvText);
+                  setPreview(result.preview);
+                  setActionResult(result);
+                });
+              }}
               className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!canContinue}
+              disabled={!canContinue || isPending}
             >
-              Save patient drafts
+              Save valid patients
             </button>
             <Link
               href="/dashboard/recall"
@@ -82,11 +98,24 @@ export function PatientImportWorkflow() {
               Continue to recall review
             </Link>
           </div>
-          {saveState === "prepared" ? (
-            <p className="mt-4 rounded-md border border-line bg-surface px-4 py-3 text-sm leading-6 text-muted">
-              Patient drafts are prepared in the browser preview only. Database saving requires real
-              authentication, tenant resolution, and audit persistence.
-            </p>
+          {actionResult ? (
+            <div
+              className={`mt-4 rounded-md border px-4 py-3 text-sm leading-6 ${
+                actionResult.ok
+                  ? "border-brand-100 bg-brand-50 text-brand-700"
+                  : "border-line bg-surface text-muted"
+              }`}
+              role="status"
+            >
+              <p className="font-semibold">{actionResult.message}</p>
+              {actionResult.persistence ? (
+                <p className="mt-1">
+                  Created {actionResult.persistence.createdPatients} patients; skipped{" "}
+                  {actionResult.persistence.skippedRows} rows; source{" "}
+                  {actionResult.persistence.source}.
+                </p>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </section>
@@ -108,8 +137,8 @@ export function PatientImportWorkflow() {
         <Card>
           <h2 className="text-base font-semibold text-ink">Expected CSV columns</h2>
           <p className="mt-3 text-sm leading-6 text-muted">
-            `firstName`, `lastName`, `email`, `phone`, `lastVisitDate`, `nextAppointmentDate`,
-            `preferredContactChannel`, and `notes`. Dates should use `YYYY-MM-DD`.
+            firstName, lastName, email, phone, lastVisitDate, nextAppointmentDate,
+            preferredContactChannel, and notes. Dates should use YYYY-MM-DD.
           </p>
         </Card>
       </aside>
