@@ -52,8 +52,8 @@ export default async function OnboardingPage() {
         <h1 className="mt-3 text-3xl font-semibold text-ink">Clinic onboarding workflow</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
           A practical four-step path for showing a clinic how {APP_NAME} turns a patient list into a
-          recall follow-up queue. Real authentication, sending, payments, and AI calls are not part
-          of this MVP flow.
+          recall follow-up queue for receptionists, doctors, managers, and administrative staff.
+          Real authentication, sending, payments, and AI calls are not part of this MVP flow.
         </p>
       </div>
 

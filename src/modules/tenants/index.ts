@@ -7,6 +7,17 @@ export type TenantContext = {
   tenantName?: string;
 };
 
+export const tenantOwnedModels = [
+  "Patient",
+  "Appointment",
+  "RecallCampaign",
+  "NotificationMessage",
+  "PatientImportBatch",
+  "AuditLog",
+] as const;
+
+export type TenantOwnedModel = (typeof tenantOwnedModels)[number];
+
 export function assertTenantContext(
   context: TenantContext | null,
 ): asserts context is TenantContext {
@@ -47,6 +58,15 @@ export function createTenantScopedWhere<TWhere extends Record<string, unknown>>(
   };
 }
 
+export function assertTenantScopedQuery(
+  model: TenantOwnedModel,
+  where: Record<string, unknown> | null | undefined,
+): asserts where is Record<string, unknown> & { tenantId: string } {
+  if (!where || typeof where.tenantId !== "string" || where.tenantId.length === 0) {
+    throw new Error(`${model} queries must include tenantId.`);
+  }
+}
+
 export function assertTenantScopedInput<TInput extends { tenantId?: string }>(
   input: TInput,
   tenantId: string,
@@ -60,6 +80,15 @@ export function assertTenantScopedInput<TInput extends { tenantId?: string }>(
   }
 
   input.tenantId = tenantId;
+}
+
+export function assertTenantOwnedData(
+  model: TenantOwnedModel,
+  data: Record<string, unknown> | null | undefined,
+): asserts data is Record<string, unknown> & { tenantId: string } {
+  if (!data || typeof data.tenantId !== "string" || data.tenantId.length === 0) {
+    throw new Error(`${model} writes must include tenantId.`);
+  }
 }
 
 export function getTenantDisplayContext(context: TenantContext): {

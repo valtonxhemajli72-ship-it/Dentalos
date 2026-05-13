@@ -31,6 +31,8 @@ The import module catches empty rows, missing names, invalid emails, invalid dat
 
 Database persistence also checks for likely duplicates inside the current tenant. MVP duplicate handling is conservative: duplicate rows are skipped and counted rather than merged.
 
+Duplicate counts are operational metadata. They must not expose patient names, contact values, notes, or raw row content in audit logs.
+
 ## Persistence
 
 Saving an import creates:
@@ -41,6 +43,13 @@ Saving an import creates:
 - Safe audit events with counts only.
 
 The database is required for persistence. The app still builds and previews imports without a live database.
+
+## Role Fit
+
+- Receptionists prepare and validate patient lists.
+- Clinic managers review import status and readiness.
+- Doctors use downstream recall queues rather than raw imports.
+- Administrative staff see only what their future role permissions allow.
 
 ## Current Limitations
 

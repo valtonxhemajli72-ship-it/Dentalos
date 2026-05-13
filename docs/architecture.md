@@ -20,6 +20,8 @@ No fetch, update, delete, list, import, export, event, or job operation for tena
 
 Background jobs and event handlers carry tenant context explicitly so asynchronous work follows the same isolation rules as request-response flows.
 
+Tenant isolation helpers live in `src/modules/tenants`. Use `requireTenantId`, `createTenantScopedWhere`, `assertTenantScopedQuery`, and `assertTenantOwnedData` to make scope reviewable in code.
+
 ## Request Flow
 
 ```text
@@ -27,6 +29,8 @@ Request -> Auth -> Tenant resolution -> Permission check -> Validation -> Domain
 ```
 
 Each step should be explicit in code once that layer exists. Missing context should fail closed.
+
+Development auth provides a deterministic local Klinika360 tenant only outside production. Production must use real authentication and membership checks before private routes are usable.
 
 ## Event Examples
 
@@ -64,3 +68,10 @@ AI belongs in an orchestration module, not scattered through product code.
 - Treat AI suggestions as drafts. The system validates and the user approves.
 
 Do not send patient PII to AI providers until the product has an explicit privacy, compliance, and vendor policy.
+
+## Enterprise Baseline
+
+- Safe security headers are configured in `next.config.mjs`; CSP starts in report-only mode to avoid breaking development.
+- GitHub CI, CodeQL, Semgrep, secret scanning, and Dependabot are configured as repository baselines.
+- Accessibility target is WCAG 2.2 AA.
+- Performance target is Core Web Vitals and fast operational dashboard navigation.

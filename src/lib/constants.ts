@@ -2,9 +2,28 @@ export const APP_NAME = "Klinika360";
 export const DEMO_TENANT_NAME = "Klinika360";
 export const INTERNAL_PROJECT_NAME = "DentalOS";
 export const APP_DESCRIPTION =
-  "A secure multi-tenant SaaS platform for dental clinic recall, reminders, follow-up, and patient reactivation workflows.";
+  "An enterprise-ready multi-tenant SaaS platform for dental clinic recall, reminders, follow-up, and patient reactivation workflows.";
 
 export const appName = APP_NAME;
+
+export const enterpriseUserRoles = [
+  {
+    role: "Doctors",
+    description: "Review patient care context, recall readiness, and follow-up queues.",
+  },
+  {
+    role: "Receptionists",
+    description: "Manage patient imports, recall calls, reminder preparation, and scheduling work.",
+  },
+  {
+    role: "Clinic managers",
+    description: "Monitor no-shows, recall readiness, import status, and clinic activity.",
+  },
+  {
+    role: "Administrative staff",
+    description: "Work from role-appropriate operational lists with tenant-scoped access.",
+  },
+] as const;
 
 export const wedgeCapabilities = [
   {

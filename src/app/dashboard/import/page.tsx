@@ -20,7 +20,8 @@ export default async function PatientImportPage() {
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               Paste a clinic CSV, preview patient drafts, and prepare the data needed for recall
               automation. Valid rows can be saved to the tenant database when a local database is
-              configured; raw CSV content is never stored.
+              configured; raw CSV content is never stored. Receptionists can prepare the list while
+              managers review import readiness.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">

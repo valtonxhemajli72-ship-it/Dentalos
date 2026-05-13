@@ -1,0 +1,9 @@
+# Default ownership for review routing.
+* @valtonxhemajli72-ship-it
+
+# Security, tenancy, persistence, and CI changes need owner attention.
+/prisma/ @valtonxhemajli72-ship-it
+/src/server/ @valtonxhemajli72-ship-it
+/src/modules/tenants/ @valtonxhemajli72-ship-it
+/src/modules/patient-import/ @valtonxhemajli72-ship-it
+/.github/ @valtonxhemajli72-ship-it

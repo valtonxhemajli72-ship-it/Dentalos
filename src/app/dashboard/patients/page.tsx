@@ -37,7 +37,8 @@ export default async function PatientsPage() {
             <h1 className="mt-3 text-3xl font-semibold text-ink">Patients</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               Tenant-scoped patient records for recall onboarding. Contact details stay masked in
-              operational views.
+              operational views so staff can work from status and availability without exposing
+              unnecessary patient details.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">

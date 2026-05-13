@@ -75,7 +75,8 @@ export default async function RecallDashboardPage() {
             <h1 className="mt-3 text-3xl font-semibold text-ink">Patient recall queue</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               Prioritize patients who are due or overdue, separate safe campaign work from manual
-              review, and keep tenant-owned patient data behind the module boundary.
+              review, and keep tenant-owned patient data behind the module boundary. Doctors can
+              review care context while receptionists prepare scheduling work.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">

@@ -4,6 +4,8 @@ Klinika360 is a multi-tenant SaaS platform for dental clinics. DentalOS remains 
 
 The first version should help a clinic consistently bring patients back into care without adding more manual work to the front desk.
 
+Klinika360 is designed for doctors, receptionists, clinic managers, administrative staff, and other clinic team members. Role-based production access is planned; current local/demo auth is intentionally limited and fails safely in production.
+
 ## Initial Wedge
 
 - Recall campaigns for patients due or overdue for care.
@@ -11,6 +13,7 @@ The first version should help a clinic consistently bring patients back into car
 - Post-visit follow-up workflows.
 - Patient reactivation lists for dormant patients.
 - Clinic activity views for operational follow-through.
+- Tenant-scoped patient import persistence for recall onboarding.
 
 ## Long-Term Modules
 
@@ -92,6 +95,10 @@ See:
 - `docs/product-strategy.md`
 - `docs/recall-mvp.md`
 - `docs/security.md`
+- `docs/enterprise-readiness.md`
+- `docs/security-checklist.md`
+- `docs/accessibility.md`
+- `docs/performance.md`
 
 ## Git Workflow
 
@@ -108,6 +115,15 @@ See:
 - Validate inputs at system boundaries.
 - Fail safely when tenant, permission, or validation context is missing.
 - Treat healthcare and dental data with heightened privacy expectations.
+- Target OWASP ASVS Level 2 as the application security baseline.
+- Target WCAG 2.2 AA for accessibility and Core Web Vitals for performance.
+- Do not paste real secrets or patient data into AI coding tools.
+
+## CI And Repository Governance
+
+The repository includes GitHub workflows for CI, CodeQL, Semgrep, and secret scanning, plus Dependabot configuration for npm and GitHub Actions. Pull requests should pass lint, typecheck, formatting, Prisma validation, build, and dependency audit checks before merge.
+
+Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, and issue templates. Security reports should use private channels and fake data only.
 
 ## MVP Roadmap
 
@@ -119,3 +135,12 @@ See:
 6. Add notification delivery adapters behind safe interfaces.
 7. Add audit logs and operational reporting.
 8. Pilot with a small clinic and measure workflow completion, not medical outcomes.
+
+## Intentionally Not Implemented Yet
+
+- Production authentication and full RBAC.
+- Real SMS, email, WhatsApp, or phone delivery integrations.
+- Payment processing.
+- Real OpenAI or other AI provider calls.
+- Dedicated single-tenant deployments.
+- Medical diagnosis or treatment recommendation features.

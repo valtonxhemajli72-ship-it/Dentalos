@@ -2,6 +2,8 @@
 
 Klinika360 handles sensitive clinic and patient operations. Build with privacy and tenant isolation as default product behavior.
 
+The application security target is OWASP ASVS Level 2. This is a design target, not a compliance claim.
+
 ## Secret Handling
 
 - Keep real secrets out of Git.
@@ -52,6 +54,13 @@ Patient import audit metadata must use counts and identifiers only, such as row 
 
 Import persistence must store only normalized patient records and import counts. Raw pasted CSV is never stored.
 
+## Dependency And Repository Security
+
+- GitHub CI should run lint, typecheck, formatting checks, Prisma validation, build, and high-severity dependency audit.
+- CodeQL, Semgrep, and secret scanning are configured as baseline workflows.
+- Dependabot should open weekly grouped updates for npm and GitHub Actions.
+- Branch protection should require CI, review, and security-sensitive owner review before production use.
+
 ## Data Retention Notes
 
 - Define retention policies before storing large volumes of patient communications.
@@ -69,3 +78,16 @@ DentalOS should not make diagnosis, treatment, or clinical necessity claims. Pro
 - Validate AI outputs against deterministic business rules.
 - Require human approval for patient-facing messages until policy says otherwise.
 - Do not send sensitive patient data to AI providers without explicit approval, documentation, and contractual review.
+- Do not paste real secrets or real patient data into AI coding tools.
+- Turn off model-training usage where applicable for personal AI coding tools.
+- Use private repositories while pre-launch when possible.
+- Review AI-generated code before merging, especially for auth, tenant isolation, PII, payment, AI, and medical workflows.
+
+## Intentionally Not Implemented Yet
+
+- Real authentication provider and production RBAC.
+- Real SMS, email, WhatsApp, or phone integrations.
+- Payment processing.
+- Real OpenAI or other AI provider calls.
+- Dedicated single-tenant deployments.
+- Medical diagnosis or treatment recommendation features.

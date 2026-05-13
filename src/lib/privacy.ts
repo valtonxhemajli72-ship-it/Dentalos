@@ -4,12 +4,16 @@ export type AuditMetadataRecord = Record<string, AuditMetadataValue>;
 const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 const phonePattern = /(?:\+?\d[\d\s().-]{6,}\d)/;
 const unsafeMetadataKeyPattern =
-  /(firstName|lastName|fullName|name|email|phone|note|message|body|raw|csv|contactValue)/i;
+  /(firstName|lastName|fullName|name|email|phone|note|message|body|raw|csv|contactValue|address|dob|birth)/i;
 
 export function maskEmail(email: string): string {
   const [localPart, domain] = email.split("@");
   const visible = localPart?.slice(0, 1) || "*";
-  return domain ? `${visible}***@${domain}` : "Email provided";
+  const [domainLabel, ...domainParts] = domain?.split(".") ?? [];
+  const suffix = domainParts.length > 0 ? `.${domainParts.at(-1)}` : "";
+  const maskedDomain = domainLabel ? `${domainLabel.slice(0, 1)}***${suffix}` : "masked";
+
+  return domain ? `${visible}***@${maskedDomain}` : "Email provided";
 }
 
 export function maskPhone(phone: string): string {
@@ -29,6 +33,33 @@ export function isLikelyPhone(value: string): boolean {
 
 export function redactPII(value: string): string {
   return value.replace(emailPattern, "[redacted-email]").replace(phonePattern, "[redacted-phone]");
+}
+
+export function maskContactValue(value: string | null | undefined): string {
+  if (!value) {
+    return "No contact method";
+  }
+
+  if (isLikelyEmail(value)) {
+    return maskEmail(value);
+  }
+
+  if (isLikelyPhone(value)) {
+    return maskPhone(value);
+  }
+
+  return "Contact provided";
+}
+
+export function redactAuditMetadata(
+  metadata: AuditMetadataRecord | undefined,
+): AuditMetadataRecord {
+  return Object.fromEntries(
+    Object.entries(metadata ?? {}).map(([key, value]) => [
+      unsafeMetadataKeyPattern.test(key) ? "redactedKey" : key,
+      typeof value === "string" ? redactPII(value) : value,
+    ]),
+  );
 }
 
 export function assertNoPIIInAuditMetadata(metadata: AuditMetadataRecord | undefined): void {
