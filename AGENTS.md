@@ -1,6 +1,8 @@
 # AGENTS.md
 
-This repository is DentalOS, the internal codebase for Klinika360, a multi-tenant SaaS product for dental clinics. The first sellable wedge is patient recall, appointment reminders, follow-up automation, no-show reduction, and patient reactivation. The long-term product can expand into patients, appointments, documents, billing, notifications, reports, integrations, and AI-assisted workflows.
+This repository is DentalOS, the internal codebase for Klinika360. Klinika360 is the public product and demo clinic identity. It is a multi-tenant SaaS platform for dental clinics, starting with patient recall, appointment reminders, follow-up automation, no-show reduction, patient import, and patient reactivation.
+
+The product must feel serious for doctors, receptionists, clinic managers, administrative staff, and other clinic team members. Keep the initial wedge lean, but build as if enterprise review, security review, and accessibility review are normal parts of the work.
 
 ## Working Principles
 
@@ -10,6 +12,8 @@ This repository is DentalOS, the internal codebase for Klinika360, a multi-tenan
 - TypeScript first. Prefer explicit types at boundaries and strict validation for untrusted inputs.
 - Do not add unnecessary dependencies. Use platform, framework, or existing local utilities when sufficient.
 - Keep the initial product lean and sellable.
+- Prefer human-readable branches such as `feature/recall-mvp`, `feature/patient-import`, `feature/import-persistence`, `chore/enterprise-baseline`, and `chore/platform-roadmap`.
+- Future enterprise services must go through internal interfaces before product modules depend on them.
 
 ## Security Rules
 
@@ -20,10 +24,13 @@ This repository is DentalOS, the internal codebase for Klinika360, a multi-tenan
 - Validate all inputs at system boundaries.
 - Fail safely when authentication, tenant resolution, permissions, or validation are missing.
 - Treat healthcare and dental data as sensitive even when the product is not making medical decisions.
+- Do not make fake compliance, security, revenue, or medical claims.
+- Target OWASP ASVS Level 2 for application security decisions.
+- No PII in logs, metrics, audit metadata, AI prompts, event metadata, usage metadata, or workflow payloads.
 
 ## Tenant Isolation Rules
 
-- DentalOS MVP uses a shared app and shared PostgreSQL database with `tenantId` on tenant-owned records.
+- The MVP uses a shared app and shared PostgreSQL database with `tenantId` on tenant-owned records.
 - Tenant-owned data must include `tenantId` and be queried through tenant-aware access paths.
 - No fetch, update, delete, list, import, export, event, or job operation for tenant-owned data may run without tenant context.
 - Patient imports create `PatientImportBatch` records with counts only; never store raw CSV content.
@@ -31,6 +38,26 @@ This repository is DentalOS, the internal codebase for Klinika360, a multi-tenan
 - Never trust tenant IDs from the client without checking membership and permissions.
 - Background jobs and event handlers must carry tenant context explicitly.
 - Cross-tenant admin workflows need explicit authorization and audit logs.
+
+Tenant-owned models include `Patient`, `Appointment`, `RecallCampaign`, `NotificationMessage`, `PatientImportBatch`, and `AuditLog`. Repository functions must be named and shaped so tenant scope is obvious, for example `getPatientForTenant(tenantId, patientId)`. Do not add `getPatient(id)` style shortcuts.
+
+Tenant isolation roadmap:
+
+- MVP: shared schema, shared database, `tenantId` on tenant-owned rows.
+- Next: PostgreSQL Row-Level Security.
+- Later: schema-per-tenant for mid-market if needed.
+- Later: database-per-tenant for enterprise if paid or contractually required.
+- Consider PgBouncer when PostgreSQL connection pressure grows.
+
+## Patient Import Rules
+
+- Require tenant context before persistence.
+- Parse pasted CSV without storing raw CSV content.
+- Persist only valid, non-duplicate tenant-scoped records.
+- Check duplicates inside the current tenant only.
+- Store `PatientImportBatch` counts and status only.
+- Use audit metadata with counts, statuses, IDs, or flags only.
+- Do not store patient names, emails, phones, notes, message bodies, or raw CSV in audit metadata.
 
 ## Coding Conventions
 
@@ -41,6 +68,21 @@ This repository is DentalOS, the internal codebase for Klinika360, a multi-tenan
 - Keep functions small and intention-revealing.
 - Use readable product copy; avoid fake claims and medical claims.
 - Add comments only when they clarify non-obvious logic or security decisions.
+- Public UI copy should say Klinika360. DentalOS is for internal repo or architecture references.
+- Use role-aware product language: doctors review care context, receptionists manage recall and scheduling work, managers monitor operational readiness, and staff see only what their role permits.
+
+## Platform Roadmap Rules
+
+- Do not install or deploy Temporal, Kafka, Debezium, ClickHouse, OPA, Unleash, OpenMeter, Falco, Chaos Mesh, cert-manager, External Secrets Operator, Prometheus, or Grafana unless a task explicitly asks for that implementation.
+- Do not add Kubernetes manifests until deployment architecture is explicitly in scope.
+- Use `src/server/workflows` for future durable workflow boundaries; Temporal may implement it later.
+- Use `src/server/events` for domain events; EventBridge, Kafka, Debezium, or an outbox relay may implement it later.
+- Use `src/server/policy` for policy decisions; OPA may implement it later.
+- Use `src/server/feature-flags` for release controls; Unleash may implement it later.
+- Use `src/server/metering` for usage events; OpenMeter may implement it later.
+- Use `src/server/observability` for metrics; Prometheus, Grafana, and OpenTelemetry may implement it later.
+- Data residency must be considered for future infrastructure changes. EU tenant data should remain in EU regions in production.
+- Do not move tenant data cross-region without explicit product, legal, and security decisions.
 
 ## AI Rules
 
@@ -50,6 +92,8 @@ This repository is DentalOS, the internal codebase for Klinika360, a multi-tenan
 - Users approve sensitive actions.
 - Store prompt templates and AI policies in an auditable registry when introduced.
 - Do not send PII to AI providers without explicit product and compliance decisions.
+- Do not paste real secrets or real patient data into AI coding tools.
+- Review AI-generated code before merging, especially for auth, tenant isolation, PII, payment, AI, and medical workflows.
 
 ## Testing Expectations
 
@@ -58,6 +102,8 @@ This repository is DentalOS, the internal codebase for Klinika360, a multi-tenan
 - Patient import tests should cover invalid dates, missing names, duplicate contacts, unsupported channels, and no PII in audit metadata.
 - Keep UI tests focused on important user workflows.
 - Run available checks before handoff: format, lint, typecheck, build, and Prisma validation when practical.
+- Accessibility target is WCAG 2.2 AA. Preserve labels, semantic HTML, visible focus, contrast, keyboard access, and readable tables.
+- Performance target is Core Web Vitals. Prefer server components, avoid large client bundles, and do not add heavy libraries without a real need.
 
 ## Git Expectations
 
@@ -66,6 +112,8 @@ This repository is DentalOS, the internal codebase for Klinika360, a multi-tenan
 - Do not commit generated caches, build output, local databases, `.env` files, or secrets.
 - Preserve user changes. Do not revert unrelated work.
 - Commit messages should be concise and conventional when practical.
+- Do not use branch names mentioning Codex, agents, bots, AI, or automation.
+- Never force push unless explicitly requested.
 
 ## Review Guidelines
 
@@ -82,3 +130,14 @@ Review every change with these questions:
 - Are background jobs tenant-aware and idempotent?
 - Is AI output validated and reviewed before action?
 - Are dependencies necessary and maintained?
+- Is the UI keyboard accessible and understandable for doctors, receptionists, managers, and staff?
+- Does the change keep navigation fast and avoid unnecessary client-side work?
+
+## Intentionally Not Implemented Yet
+
+- Real authentication provider and production RBAC.
+- Real SMS, email, WhatsApp, or phone delivery integrations.
+- Payment processing.
+- Real OpenAI or other AI provider calls.
+- Dedicated single-tenant deployments.
+- Medical diagnosis or clinical decision features.

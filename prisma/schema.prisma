@@ -211,7 +211,7 @@ model AuditLog {
   tenantId    String
   actorUserId String?
   action      String
-  entityType  String?
+  entityType  String
   entityId    String?
   metadata    Json?
   createdAt   DateTime @default(now())

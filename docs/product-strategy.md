@@ -18,6 +18,8 @@ The wedge creates value before Klinika360 becomes a full clinic operating system
 
 Small to mid-sized dental clinics with an owner, practice manager, or operations lead who cares about schedule reliability and front-desk efficiency. The ideal pilot clinic has enough patient volume to feel recall and reminder pain but is not yet locked into a large enterprise workflow.
 
+The daily users include receptionists working recall and scheduling queues, doctors reviewing patient context, clinic managers monitoring readiness and activity, and administrative staff completing role-appropriate operational tasks.
+
 ## MVP Scope
 
 - Clinic tenant and team membership foundation.
@@ -28,6 +30,7 @@ Small to mid-sized dental clinics with an owner, practice manager, or operations
 - Patient reactivation workspace.
 - Activity dashboard for operational follow-up.
 - Audit logs for sensitive actions.
+- Enterprise baseline documentation, CI, security scanning, accessibility expectations, and performance expectations.
 
 ## Pilot Offer
 
@@ -48,6 +51,7 @@ Avoid promising medical outcomes or exaggerated financial results. Measure workf
 - Deep PMS integrations before the recall workflow is validated.
 - Automated AI actions without human review.
 - Multi-location enterprise controls unless pilots demand them.
+- Fake compliance, medical, or security claims.
 
 ## Sales-Oriented Value Proposition
 

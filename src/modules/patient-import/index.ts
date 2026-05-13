@@ -1,4 +1,4 @@
-import { maskEmail, maskPhone } from "@/lib/privacy";
+import { maskContactValue } from "@/lib/privacy";
 import type { RecallContactChannel } from "@/modules/patients/recall";
 
 export type PatientImportColumn =
@@ -541,11 +541,11 @@ function buildContactIndicators(row: PatientImportNormalizedRow): string[] {
   const indicators: string[] = [];
 
   if (row.email) {
-    indicators.push(maskEmail(row.email));
+    indicators.push(maskContactValue(row.email));
   }
 
   if (row.phone) {
-    indicators.push(maskPhone(row.phone));
+    indicators.push(maskContactValue(row.phone));
   }
 
   return indicators.length > 0 ? indicators : ["No contact method"];

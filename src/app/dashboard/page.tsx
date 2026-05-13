@@ -64,7 +64,8 @@ export default async function DashboardPage() {
             <h1 className="text-3xl font-semibold text-ink">Follow-up dashboard</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               A focused operating view for recall, reminders, no-show prevention, and patient
-              reactivation. Data is tenant-scoped when a database is configured.
+              reactivation. Doctors review care context, receptionists work the follow-up queue, and
+              managers monitor readiness. Data is tenant-scoped when a database is configured.
             </p>
           </div>
           <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-muted">
@@ -116,7 +117,8 @@ export default async function DashboardPage() {
           <dl className="mt-5 space-y-4">
             {[
               ["Auth", "planned"],
-              ["Tenant isolation", "modeled"],
+              ["Tenant isolation", "enforced by repositories"],
+              ["Role access", "planned"],
               ["Notifications", "module boundary"],
               ["AI orchestration", "assistant layer"],
             ].map(([name, status]) => (

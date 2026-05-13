@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { APP_NAME, wedgeCapabilities } from "@/lib/constants";
+import { APP_NAME, enterpriseUserRoles, wedgeCapabilities } from "@/lib/constants";
 
 const workflowRows = [
   { label: "Due for recall", count: "42", tone: "bg-brand-50 text-brand-700" },
@@ -25,7 +25,7 @@ export default function HomePage() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">
               A multi-tenant clinic operating system starting with the workflows that keep patients
               returning: recall campaigns, appointment reminders, post-visit follow-up, and patient
-              reactivation.
+              reactivation for doctors, receptionists, managers, and administrative staff.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -96,6 +96,22 @@ export default function HomePage() {
               <Card key={capability.title}>
                 <p className="text-sm font-semibold text-ink">{capability.title}</p>
                 <p className="mt-2 text-sm leading-6 text-muted">{capability.description}</p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-12 max-w-2xl">
+            <h2 className="text-2xl font-semibold text-ink">Built around clinic roles</h2>
+            <p className="mt-3 text-sm leading-6 text-muted">
+              Klinika360 keeps workflows practical for the people who run the clinic each day.
+              Role-based access is planned before production use.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {enterpriseUserRoles.map((item) => (
+              <Card key={item.role}>
+                <p className="text-sm font-semibold text-ink">{item.role}</p>
+                <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
               </Card>
             ))}
           </div>

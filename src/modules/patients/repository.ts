@@ -7,7 +7,7 @@ import {
 import type { PatientLifecycleStatus } from "@/modules/patients";
 import type { RecallContactChannel, RecallPatient } from "@/modules/patients/recall";
 import { getDemoRecallPatientsForTenant } from "@/modules/patients/recall-demo-data";
-import { createTenantScopedWhere } from "@/modules/tenants";
+import { assertTenantOwnedData, createTenantScopedWhere } from "@/modules/tenants";
 import { getPrismaClient } from "@/server/db";
 
 type PrismaContactChannel = "EMAIL" | "SMS" | "PHONE";
@@ -103,30 +103,36 @@ export async function createPatientsForTenant(
   let createdCount = 0;
 
   for (const draft of drafts) {
+    const patientData = {
+      tenantId,
+      firstName: draft.firstName,
+      lastName: draft.lastName,
+      email: draft.email,
+      phone: draft.phone,
+      lastVisitAt: draft.lastVisitAt,
+      nextRecallDueAt: inferNextRecallDueAt(draft.lastVisitAt),
+      preferredRecallChannel: toPrismaContactChannel(draft.preferredContactChannel),
+      acceptsEmail: Boolean(draft.email),
+      acceptsSms: draft.preferredContactChannel === "sms" && Boolean(draft.phone),
+      isActive: true,
+    };
+    assertTenantOwnedData("Patient", patientData);
+
     const patient = await db.patient.create({
-      data: {
-        tenantId,
-        firstName: draft.firstName,
-        lastName: draft.lastName,
-        email: draft.email,
-        phone: draft.phone,
-        lastVisitAt: draft.lastVisitAt,
-        nextRecallDueAt: inferNextRecallDueAt(draft.lastVisitAt),
-        preferredRecallChannel: toPrismaContactChannel(draft.preferredContactChannel),
-        acceptsEmail: Boolean(draft.email),
-        acceptsSms: draft.preferredContactChannel === "sms" && Boolean(draft.phone),
-        isActive: true,
-      },
+      data: patientData,
     });
 
     if (draft.nextAppointmentAt) {
+      const appointmentData = {
+        tenantId,
+        patientId: patient.id,
+        startsAt: draft.nextAppointmentAt,
+        status: "SCHEDULED",
+      };
+      assertTenantOwnedData("Appointment", appointmentData);
+
       await db.appointment.create({
-        data: {
-          tenantId,
-          patientId: patient.id,
-          startsAt: draft.nextAppointmentAt,
-          status: "SCHEDULED",
-        },
+        data: appointmentData,
       });
     }
 

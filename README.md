@@ -4,6 +4,8 @@ Klinika360 is a multi-tenant SaaS platform for dental clinics. DentalOS remains 
 
 The first version should help a clinic consistently bring patients back into care without adding more manual work to the front desk.
 
+Klinika360 is designed for doctors, receptionists, clinic managers, administrative staff, and other clinic team members. Role-based production access is planned; current local/demo auth is intentionally limited and fails safely in production.
+
 ## Initial Wedge
 
 - Recall campaigns for patients due or overdue for care.
@@ -11,6 +13,7 @@ The first version should help a clinic consistently bring patients back into car
 - Post-visit follow-up workflows.
 - Patient reactivation lists for dormant patients.
 - Clinic activity views for operational follow-through.
+- Tenant-scoped patient import persistence for recall onboarding.
 
 ## Long-Term Modules
 
@@ -22,6 +25,20 @@ The first version should help a clinic consistently bring patients back into car
 - Reports
 - AI orchestration
 - Integrations
+
+## Enterprise Platform Roadmap
+
+Klinika360 should grow into an enterprise-grade platform without installing heavy infrastructure before the product needs it. The repository now documents future platform services and exposes lightweight internal interfaces for them:
+
+- Workflows: Temporal later, behind `src/server/workflows`.
+- Eventing and analytics: outbox/EventBridge/Kafka, Debezium, and ClickHouse later, behind `src/server/events`.
+- Policy: OPA later, behind `src/server/policy`.
+- Feature flags: Unleash later, behind `src/server/feature-flags`.
+- Usage metering: OpenMeter later, behind `src/server/metering`.
+- Observability: Prometheus, Grafana, and OpenTelemetry later, behind `src/server/observability`.
+- Runtime security and secrets: Falco, cert-manager, and External Secrets Operator later if Kubernetes becomes the deployment platform.
+
+These services are planned, not installed. The current implementation is dependency-free and no-op/local by default.
 
 ## Tech Stack
 
@@ -92,6 +109,12 @@ See:
 - `docs/product-strategy.md`
 - `docs/recall-mvp.md`
 - `docs/security.md`
+- `docs/enterprise-readiness.md`
+- `docs/security-checklist.md`
+- `docs/platform-roadmap.md`
+- `docs/architecture-decisions/`
+- `docs/accessibility.md`
+- `docs/performance.md`
 
 ## Git Workflow
 
@@ -108,6 +131,15 @@ See:
 - Validate inputs at system boundaries.
 - Fail safely when tenant, permission, or validation context is missing.
 - Treat healthcare and dental data with heightened privacy expectations.
+- Target OWASP ASVS Level 2 as the application security baseline.
+- Target WCAG 2.2 AA for accessibility and Core Web Vitals for performance.
+- Do not paste real secrets or patient data into AI coding tools.
+
+## CI And Repository Governance
+
+The repository includes GitHub workflows for CI, CodeQL, Semgrep, and secret scanning, plus Dependabot configuration for npm and GitHub Actions. Pull requests should pass lint, typecheck, formatting, Prisma validation, build, and dependency audit checks before merge.
+
+Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, and issue templates. Security reports should use private channels and fake data only.
 
 ## MVP Roadmap
 
@@ -119,3 +151,20 @@ See:
 6. Add notification delivery adapters behind safe interfaces.
 7. Add audit logs and operational reporting.
 8. Pilot with a small clinic and measure workflow completion, not medical outcomes.
+
+## Tenant Isolation Roadmap
+
+- MVP: shared schema, shared PostgreSQL database, and `tenantId` on tenant-owned rows.
+- Next: PostgreSQL Row-Level Security.
+- Later: schema-per-tenant for mid-market tenants if needed.
+- Later: database-per-tenant for enterprise tenants if paid or contractually required.
+- Later: PgBouncer or equivalent connection pooling as database concurrency grows.
+
+## Intentionally Not Implemented Yet
+
+- Production authentication and full RBAC.
+- Real SMS, email, WhatsApp, or phone delivery integrations.
+- Payment processing.
+- Real OpenAI or other AI provider calls.
+- Dedicated single-tenant deployments.
+- Medical diagnosis or treatment recommendation features.
