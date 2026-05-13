@@ -45,28 +45,44 @@ enum NotificationStatus {
   CANCELLED
 }
 
+enum PatientContactChannel {
+  EMAIL
+  SMS
+  PHONE
+}
+
+enum PatientImportStatus {
+  DRAFT
+  VALIDATED
+  IMPORTED
+  FAILED
+  CANCELLED
+}
+
 model Tenant {
-  id           String                @id @default(cuid())
-  name         String
-  slug         String                @unique
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
-  memberships  Membership[]
-  patients     Patient[]
-  appointments Appointment[]
-  campaigns    RecallCampaign[]
-  messages     NotificationMessage[]
-  auditLogs    AuditLog[]
+  id            String                @id @default(cuid())
+  name          String
+  slug          String                @unique
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  memberships   Membership[]
+  patients      Patient[]
+  appointments  Appointment[]
+  campaigns     RecallCampaign[]
+  messages      NotificationMessage[]
+  auditLogs     AuditLog[]
+  importBatches PatientImportBatch[]
 }
 
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  memberships Membership[]
-  auditLogs   AuditLog[]
+  id            String               @id @default(cuid())
+  email         String               @unique
+  name          String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  memberships   Membership[]
+  auditLogs     AuditLog[]
+  importBatches PatientImportBatch[]
 }
 
 model Membership {
@@ -96,6 +112,9 @@ model Patient {
   acceptsSms             Boolean               @default(false)
   lastVisitAt            DateTime?
   nextRecallDueAt        DateTime?
+  preferredRecallChannel PatientContactChannel @default(EMAIL)
+  lastRecallContactedAt  DateTime?
+  recallOptOutAt         DateTime?
   isActive               Boolean               @default(true)
   createdAt              DateTime              @default(now())
   updatedAt              DateTime              @updatedAt
@@ -106,6 +125,7 @@ model Patient {
 
   @@index([tenantId, lastName, firstName])
   @@index([tenantId, nextRecallDueAt])
+  @@index([tenantId, lastRecallContactedAt])
 }
 
 model Appointment {
@@ -127,24 +147,24 @@ model Appointment {
 }
 
 model RecallCampaign {
-  id        String               @id @default(cuid())
+  id        String                @id @default(cuid())
   tenantId  String
   patientId String?
   name      String
-  status    RecallCampaignStatus @default(DRAFT)
+  status    RecallCampaignStatus  @default(DRAFT)
   startsAt  DateTime?
   endedAt   DateTime?
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-  tenant    Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  patient   Patient?             @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  tenant    Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient   Patient?              @relation(fields: [patientId], references: [id], onDelete: SetNull)
   messages  NotificationMessage[]
 
   @@index([tenantId, status])
 }
 
 model NotificationMessage {
-  id                String             @id @default(cuid())
+  id                String              @id @default(cuid())
   tenantId          String
   patientId         String?
   appointmentId     String?
@@ -168,17 +188,35 @@ model NotificationMessage {
   @@index([tenantId, patientId])
 }
 
+model PatientImportBatch {
+  id              String              @id @default(cuid())
+  tenantId        String
+  createdByUserId String?
+  status          PatientImportStatus @default(DRAFT)
+  source          String
+  rowCount        Int                 @default(0)
+  validRowCount   Int                 @default(0)
+  invalidRowCount Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  tenant          Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy       User?               @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+}
+
 model AuditLog {
-  id         String   @id @default(cuid())
-  tenantId   String
+  id          String   @id @default(cuid())
+  tenantId    String
   actorUserId String?
-  action     String
-  entityType String?
-  entityId   String?
-  metadata   Json?
-  createdAt  DateTime @default(now())
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  actor      User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  action      String
+  entityType  String?
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor       User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, createdAt])
   @@index([tenantId, action])

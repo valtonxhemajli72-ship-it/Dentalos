@@ -75,17 +75,22 @@ Optional integration placeholders:
 - `npm run format` - format the repository with Prettier.
 - `npm run format:check` - check formatting.
 - `npm run db:validate` - validate the Prisma schema.
+- `npm run db:seed` - manually seed fake demo data after a database and schema are available.
 
 ## Architecture Overview
 
 DentalOS is a modular monolith first. Product UI, application logic, domain modules, data access, events/jobs, and AI orchestration should remain separated even while they deploy as one application.
 
-Every tenant-owned record must be modeled with tenant context. Private routes must require authentication and tenant resolution before data access. AI is an assistant layer that suggests drafts or actions; the system remains the source of truth.
+The MVP tenancy model is a shared app and shared PostgreSQL database. Every tenant-owned record must be modeled with `tenantId`, and every tenant-owned query must include tenant context. Private routes must require authentication and tenant resolution before data access. AI is an assistant layer that suggests drafts or actions; the system remains the source of truth.
+
+The current patient import workflow helps a clinic paste a CSV, validate rows, preview masked contact indicators, and prepare patient drafts for recall review. It does not persist real data from the UI yet, and it does not send email, SMS, WhatsApp, payment, or AI requests.
 
 See:
 
 - `docs/architecture.md`
+- `docs/patient-import.md`
 - `docs/product-strategy.md`
+- `docs/recall-mvp.md`
 - `docs/security.md`
 
 ## Git Workflow
@@ -106,9 +111,10 @@ See:
 ## MVP Roadmap
 
 1. Add authentication and tenant membership.
-2. Build patient import and manual patient management.
-3. Create recall campaign segments.
-4. Add appointment reminder workflows.
-5. Add notification delivery adapters behind safe interfaces.
-6. Add audit logs and operational reporting.
-7. Pilot with a small clinic and measure workflow completion, not medical outcomes.
+2. Replace the demo import and recall queues with tenant-scoped Prisma reads and writes.
+3. Build patient import persistence with audit logs.
+4. Create recall campaign draft and approval flows.
+5. Add appointment reminder workflows.
+6. Add notification delivery adapters behind safe interfaces.
+7. Add audit logs and operational reporting.
+8. Pilot with a small clinic and measure workflow completion, not medical outcomes.

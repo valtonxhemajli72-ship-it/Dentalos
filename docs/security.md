@@ -19,8 +19,10 @@ DentalOS handles sensitive clinic and patient operations. Build with privacy and
 
 ## Tenant Isolation Rules
 
+- MVP tenancy is shared app plus shared PostgreSQL with `tenantId` on tenant-owned tables.
 - Tenant-owned tables include `tenantId`.
 - Data access must filter by tenant context.
+- Patient import, recall review, notification preparation, jobs, and audit events all require tenant context.
 - Client-supplied tenant IDs require server-side membership checks.
 - Background jobs, events, and notifications must include tenant context.
 - Cross-tenant support access requires explicit authorization and audit logging.
@@ -45,6 +47,8 @@ Audit records should capture:
 - Minimal metadata without PII.
 
 Audit logs should cover authentication-sensitive actions, membership changes, exports, notification sends, AI-assisted actions, and billing events.
+
+Patient import audit metadata must use counts and identifiers only, such as row counts, valid row counts, invalid row counts, and import batch IDs. Do not store raw names, emails, phone numbers, notes, message bodies, or CSV content in audit metadata.
 
 ## Data Retention Notes
 

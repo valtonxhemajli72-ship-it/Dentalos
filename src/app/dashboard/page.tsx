@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,7 @@ const focusCards = [
     value: "42",
     label: "patients due",
     detail: "Segment patients by due date, contact preference, and last successful outreach.",
+    href: "/dashboard/recall",
   },
   {
     title: "Appointment reminders",
@@ -26,6 +28,13 @@ const focusCards = [
     value: "76",
     label: "inactive patients",
     detail: "Build a practical queue for dormant patient follow-up without over-automating.",
+  },
+  {
+    title: "Patient import",
+    value: "CSV",
+    label: "preview workflow",
+    detail: "Paste a patient list, validate rows, and prepare recall-ready drafts.",
+    href: "/dashboard/import",
   },
 ];
 
@@ -55,7 +64,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <section className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4 lg:p-8">
+      <section className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-5 lg:p-8">
         {focusCards.map((card) => (
           <Card key={card.title}>
             <div className="flex min-h-36 flex-col justify-between">
@@ -65,6 +74,14 @@ export default function DashboardPage() {
                 <p className="mt-1 text-sm text-muted">{card.label}</p>
               </div>
               <p className="mt-4 text-sm leading-6 text-muted">{card.detail}</p>
+              {card.href ? (
+                <Link
+                  href={card.href}
+                  className="mt-4 inline-flex w-fit text-sm font-semibold text-brand-700 hover:text-brand-600"
+                >
+                  Open recall queue
+                </Link>
+              ) : null}
             </div>
           </Card>
         ))}

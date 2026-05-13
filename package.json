@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:validate": "node scripts/validate-prisma.mjs"
+    "db:validate": "node scripts/validate-prisma.mjs",
+    "db:seed": "node scripts/seed-demo-data.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
