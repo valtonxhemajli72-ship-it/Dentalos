@@ -11,6 +11,7 @@ Enterprise readiness means the product is secure, accessible, fast, reviewable, 
 - Performance: Core Web Vitals, fast dashboard navigation, and minimal client-side code.
 - Tenancy: shared app, shared PostgreSQL, `tenantId` on tenant-owned records.
 - Governance: CI required checks, code owners, security reporting, dependency monitoring, and secret scanning.
+- Platform posture: document long-term infrastructure choices early, but keep current implementations no-op or local until explicitly needed.
 
 ## Clinic Roles
 
@@ -48,6 +49,7 @@ Full production RBAC is not implemented yet. Until it is, production auth must f
 - Review security headers and move CSP from report-only to enforced mode after validation.
 - Add automated accessibility smoke tests once browser test infrastructure is introduced.
 - Define retention, export, and deletion policies before storing patient communications at scale.
+- Use the platform roadmap before introducing Temporal, Debezium, ClickHouse, OPA, Unleash, OpenMeter, Falco, Chaos Mesh, cert-manager, External Secrets Operator, Prometheus, or Grafana.
 
 ## Local Hooks
 

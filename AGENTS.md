@@ -12,7 +12,8 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - TypeScript first. Prefer explicit types at boundaries and strict validation for untrusted inputs.
 - Do not add unnecessary dependencies. Use platform, framework, or existing local utilities when sufficient.
 - Keep the initial product lean and sellable.
-- Prefer human-readable branches such as `feature/recall-mvp`, `feature/patient-import`, `feature/import-persistence`, and `chore/enterprise-baseline`.
+- Prefer human-readable branches such as `feature/recall-mvp`, `feature/patient-import`, `feature/import-persistence`, `chore/enterprise-baseline`, and `chore/platform-roadmap`.
+- Future enterprise services must go through internal interfaces before product modules depend on them.
 
 ## Security Rules
 
@@ -25,6 +26,7 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - Treat healthcare and dental data as sensitive even when the product is not making medical decisions.
 - Do not make fake compliance, security, revenue, or medical claims.
 - Target OWASP ASVS Level 2 for application security decisions.
+- No PII in logs, metrics, audit metadata, AI prompts, event metadata, usage metadata, or workflow payloads.
 
 ## Tenant Isolation Rules
 
@@ -38,6 +40,14 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - Cross-tenant admin workflows need explicit authorization and audit logs.
 
 Tenant-owned models include `Patient`, `Appointment`, `RecallCampaign`, `NotificationMessage`, `PatientImportBatch`, and `AuditLog`. Repository functions must be named and shaped so tenant scope is obvious, for example `getPatientForTenant(tenantId, patientId)`. Do not add `getPatient(id)` style shortcuts.
+
+Tenant isolation roadmap:
+
+- MVP: shared schema, shared database, `tenantId` on tenant-owned rows.
+- Next: PostgreSQL Row-Level Security.
+- Later: schema-per-tenant for mid-market if needed.
+- Later: database-per-tenant for enterprise if paid or contractually required.
+- Consider PgBouncer when PostgreSQL connection pressure grows.
 
 ## Patient Import Rules
 
@@ -60,6 +70,19 @@ Tenant-owned models include `Patient`, `Appointment`, `RecallCampaign`, `Notific
 - Add comments only when they clarify non-obvious logic or security decisions.
 - Public UI copy should say Klinika360. DentalOS is for internal repo or architecture references.
 - Use role-aware product language: doctors review care context, receptionists manage recall and scheduling work, managers monitor operational readiness, and staff see only what their role permits.
+
+## Platform Roadmap Rules
+
+- Do not install or deploy Temporal, Kafka, Debezium, ClickHouse, OPA, Unleash, OpenMeter, Falco, Chaos Mesh, cert-manager, External Secrets Operator, Prometheus, or Grafana unless a task explicitly asks for that implementation.
+- Do not add Kubernetes manifests until deployment architecture is explicitly in scope.
+- Use `src/server/workflows` for future durable workflow boundaries; Temporal may implement it later.
+- Use `src/server/events` for domain events; EventBridge, Kafka, Debezium, or an outbox relay may implement it later.
+- Use `src/server/policy` for policy decisions; OPA may implement it later.
+- Use `src/server/feature-flags` for release controls; Unleash may implement it later.
+- Use `src/server/metering` for usage events; OpenMeter may implement it later.
+- Use `src/server/observability` for metrics; Prometheus, Grafana, and OpenTelemetry may implement it later.
+- Data residency must be considered for future infrastructure changes. EU tenant data should remain in EU regions in production.
+- Do not move tenant data cross-region without explicit product, legal, and security decisions.
 
 ## AI Rules
 

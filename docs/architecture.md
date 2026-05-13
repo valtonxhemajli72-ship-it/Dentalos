@@ -75,3 +75,16 @@ Do not send patient PII to AI providers until the product has an explicit privac
 - GitHub CI, CodeQL, Semgrep, secret scanning, and Dependabot are configured as repository baselines.
 - Accessibility target is WCAG 2.2 AA.
 - Performance target is Core Web Vitals and fast operational dashboard navigation.
+
+## Platform Interfaces
+
+Advanced enterprise services are planned behind internal interfaces:
+
+- `src/server/workflows` for future Temporal-backed workflows.
+- `src/server/events` for domain event publishing and future outbox, broker, or CDC integration.
+- `src/server/policy` for future OPA-backed policy decisions.
+- `src/server/feature-flags` for future Unleash-backed rollout controls.
+- `src/server/metering` for future OpenMeter-backed usage events.
+- `src/server/observability` for future Prometheus, Grafana, and OpenTelemetry instrumentation.
+
+These interfaces are dependency-free and no-op or local today. Product modules should depend on these boundaries, not on vendor SDKs.

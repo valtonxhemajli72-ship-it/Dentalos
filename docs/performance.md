@@ -9,6 +9,7 @@ Klinika360 should stay fast for front-desk and clinical operations. The MVP shou
 - Minimal JavaScript for pages that do not need client state.
 - No heavy animation, charting, analytics, or UI libraries without a measured need.
 - Builds must pass without live database access or real integration secrets.
+- Tenant-level latency, error rate, and job success/failure metrics should be measured before SLA targets are promised.
 
 ## Engineering Rules
 
@@ -18,6 +19,7 @@ Klinika360 should stay fast for front-desk and clinical operations. The MVP shou
 - Avoid large dependency additions for small UI conveniences.
 - Do not add third-party analytics scripts until privacy, consent, and performance tradeoffs are reviewed.
 - Keep empty, loading, and error states clear.
+- Use no-op observability interfaces until Prometheus, Grafana, or OpenTelemetry are explicitly introduced.
 
 ## Future Automation
 

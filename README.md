@@ -26,6 +26,20 @@ Klinika360 is designed for doctors, receptionists, clinic managers, administrati
 - AI orchestration
 - Integrations
 
+## Enterprise Platform Roadmap
+
+Klinika360 should grow into an enterprise-grade platform without installing heavy infrastructure before the product needs it. The repository now documents future platform services and exposes lightweight internal interfaces for them:
+
+- Workflows: Temporal later, behind `src/server/workflows`.
+- Eventing and analytics: outbox/EventBridge/Kafka, Debezium, and ClickHouse later, behind `src/server/events`.
+- Policy: OPA later, behind `src/server/policy`.
+- Feature flags: Unleash later, behind `src/server/feature-flags`.
+- Usage metering: OpenMeter later, behind `src/server/metering`.
+- Observability: Prometheus, Grafana, and OpenTelemetry later, behind `src/server/observability`.
+- Runtime security and secrets: Falco, cert-manager, and External Secrets Operator later if Kubernetes becomes the deployment platform.
+
+These services are planned, not installed. The current implementation is dependency-free and no-op/local by default.
+
 ## Tech Stack
 
 - Next.js App Router
@@ -97,6 +111,8 @@ See:
 - `docs/security.md`
 - `docs/enterprise-readiness.md`
 - `docs/security-checklist.md`
+- `docs/platform-roadmap.md`
+- `docs/architecture-decisions/`
 - `docs/accessibility.md`
 - `docs/performance.md`
 
@@ -135,6 +151,14 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 6. Add notification delivery adapters behind safe interfaces.
 7. Add audit logs and operational reporting.
 8. Pilot with a small clinic and measure workflow completion, not medical outcomes.
+
+## Tenant Isolation Roadmap
+
+- MVP: shared schema, shared PostgreSQL database, and `tenantId` on tenant-owned rows.
+- Next: PostgreSQL Row-Level Security.
+- Later: schema-per-tenant for mid-market tenants if needed.
+- Later: database-per-tenant for enterprise tenants if paid or contractually required.
+- Later: PgBouncer or equivalent connection pooling as database concurrency grows.
 
 ## Intentionally Not Implemented Yet
 

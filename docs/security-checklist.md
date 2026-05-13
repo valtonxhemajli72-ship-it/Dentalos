@@ -22,8 +22,15 @@ Use this checklist during implementation and pull request review.
 
 - No patient names, emails, phones, notes, message contents, treatment details, or raw CSV in logs.
 - Audit metadata must use counts, IDs, statuses, and non-sensitive flags only.
+- Metrics, usage events, domain events, workflow payloads, and AI prompts must not contain PII.
 - Use masking utilities for operational UI when contact data is relevant.
 - Redact request payloads by default in diagnostics.
+
+## Platform Interfaces
+
+- Future Temporal, OPA, Unleash, OpenMeter, Prometheus, Grafana, Debezium, ClickHouse, or Kubernetes security integrations must go through internal server interfaces first.
+- Do not add direct vendor SDK calls inside product modules.
+- Do not install heavy infrastructure unless a task explicitly asks for implementation.
 
 ## Secrets
 

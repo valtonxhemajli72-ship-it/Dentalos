@@ -28,6 +28,7 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Client-supplied tenant IDs require server-side membership checks.
 - Background jobs, events, and notifications must include tenant context.
 - Cross-tenant support access requires explicit authorization and audit logging.
+- Next isolation step is PostgreSQL Row-Level Security. Schema-per-tenant and database-per-tenant are later tier options, not current implementation.
 
 ## Auth and RBAC Baseline
 
@@ -67,6 +68,15 @@ Import persistence must store only normalized patient records and import counts.
 - Provide deletion and export paths appropriate for clinic agreements.
 - Keep message content retention limited to what the product needs.
 - Avoid storing third-party payloads wholesale.
+- Tenant offboarding must eventually support export and deletion or anonymization according to retention policy.
+- Do not move tenant data across regions without explicit product, legal, and security decisions.
+
+## Data Residency Planning
+
+- EU tenants should remain in EU regions in production.
+- Future US and AU regions should have separate infrastructure boundaries.
+- Region assignment should be part of tenant onboarding and observability labeling.
+- Do not claim GDPR, HIPAA, or other compliance until proper legal and security review is complete.
 
 ## Healthcare and Dental Caution
 
