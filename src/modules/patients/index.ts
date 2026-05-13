@@ -7,3 +7,13 @@ export type PatientSummary = {
   status: PatientLifecycleStatus;
   nextRecallDueAt?: Date;
 };
+
+export type {
+  RecallAction,
+  RecallContactChannel,
+  RecallPatient,
+  RecallQueueItem,
+  RecallStatus,
+  RecallWorkspaceSnapshot,
+  RecallWorkspaceSummary,
+} from "@/modules/patients/recall";

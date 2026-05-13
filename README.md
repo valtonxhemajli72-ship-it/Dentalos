@@ -86,6 +86,7 @@ See:
 
 - `docs/architecture.md`
 - `docs/product-strategy.md`
+- `docs/recall-mvp.md`
 - `docs/security.md`
 
 ## Git Workflow
@@ -106,9 +107,10 @@ See:
 ## MVP Roadmap
 
 1. Add authentication and tenant membership.
-2. Build patient import and manual patient management.
-3. Create recall campaign segments.
-4. Add appointment reminder workflows.
-5. Add notification delivery adapters behind safe interfaces.
-6. Add audit logs and operational reporting.
-7. Pilot with a small clinic and measure workflow completion, not medical outcomes.
+2. Replace the demo recall queue with tenant-scoped Prisma reads.
+3. Build patient import and manual patient management.
+4. Create recall campaign draft and approval flows.
+5. Add appointment reminder workflows.
+6. Add notification delivery adapters behind safe interfaces.
+7. Add audit logs and operational reporting.
+8. Pilot with a small clinic and measure workflow completion, not medical outcomes.

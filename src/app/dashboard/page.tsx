@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,7 @@ const focusCards = [
     value: "42",
     label: "patients due",
     detail: "Segment patients by due date, contact preference, and last successful outreach.",
+    href: "/dashboard/recall",
   },
   {
     title: "Appointment reminders",
@@ -65,6 +67,14 @@ export default function DashboardPage() {
                 <p className="mt-1 text-sm text-muted">{card.label}</p>
               </div>
               <p className="mt-4 text-sm leading-6 text-muted">{card.detail}</p>
+              {card.href ? (
+                <Link
+                  href={card.href}
+                  className="mt-4 inline-flex w-fit text-sm font-semibold text-brand-700 hover:text-brand-600"
+                >
+                  Open recall queue
+                </Link>
+              ) : null}
             </div>
           </Card>
         ))}
