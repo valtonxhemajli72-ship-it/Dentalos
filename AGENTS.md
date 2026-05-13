@@ -23,7 +23,9 @@ This repository is for DentalOS, a multi-tenant SaaS product for dental clinics.
 
 ## Tenant Isolation Rules
 
+- DentalOS MVP uses a shared app and shared PostgreSQL database with `tenantId` on tenant-owned records.
 - Tenant-owned data must include `tenantId` and be queried through tenant-aware access paths.
+- No fetch, update, delete, list, import, export, event, or job operation for tenant-owned data may run without tenant context.
 - Private routes must resolve authenticated user and active tenant before accessing tenant data.
 - Never trust tenant IDs from the client without checking membership and permissions.
 - Background jobs and event handlers must carry tenant context explicitly.
@@ -52,6 +54,7 @@ This repository is for DentalOS, a multi-tenant SaaS product for dental clinics.
 
 - Add tests with the same vertical slice when behavior becomes non-trivial.
 - Cover tenant isolation, permission checks, validation, and failure paths.
+- Patient import tests should cover invalid dates, missing names, duplicate contacts, unsupported channels, and no PII in audit metadata.
 - Keep UI tests focused on important user workflows.
 - Run available checks before handoff: format, lint, typecheck, build, and Prisma validation when practical.
 
@@ -72,6 +75,7 @@ Review every change with these questions:
 - Are inputs validated before domain logic runs?
 - Are permissions checked before sensitive reads or writes?
 - Could this log PII or secrets?
+- Does audit metadata contain counts and identifiers only?
 - Does this fail safely?
 - Are background jobs tenant-aware and idempotent?
 - Is AI output validated and reviewed before action?

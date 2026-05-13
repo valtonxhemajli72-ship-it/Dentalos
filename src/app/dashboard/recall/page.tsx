@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { createPatientImportPreview, patientImportExampleCsv } from "@/modules/patient-import";
 import { getDemoRecallWorkspaceSnapshot } from "@/modules/patients/recall-demo-data";
 import type { RecallAction, RecallQueueItem, RecallStatus } from "@/modules/patients/recall";
 
@@ -38,11 +39,13 @@ const actionLabels: Record<RecallAction, string> = {
 
 export default function RecallDashboardPage() {
   const snapshot = getDemoRecallWorkspaceSnapshot();
+  const importPreview = createPatientImportPreview(patientImportExampleCsv);
   const actionablePatients = snapshot.queue.filter((item) =>
     ["call_to_schedule", "send_recall_message", "send_gentle_nudge"].includes(
       item.recommendedAction,
     ),
   );
+  const hasPatients = snapshot.summary.totalPatients > 0;
 
   return (
     <DashboardShell>
@@ -56,14 +59,50 @@ export default function RecallDashboardPage() {
               review, and keep tenant-owned patient data behind the module boundary.
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex min-h-10 w-fit items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
-          >
-            Back to dashboard
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/dashboard/import"
+              className="inline-flex min-h-10 w-fit items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
+            >
+              Import patients
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-10 w-fit items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
+            >
+              Back to dashboard
+            </Link>
+          </div>
         </div>
       </div>
+
+      <section className="grid gap-4 p-6 pb-0 md:grid-cols-3 lg:p-8 lg:pb-0">
+        <Card>
+          <p className="text-sm font-semibold text-ink">Import readiness</p>
+          <p className="mt-3 text-2xl font-semibold text-brand-700">
+            {importPreview.summary.validRowCount} drafts
+          </p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Demo CSV preview has {importPreview.summary.invalidRowCount} rows needing cleanup.
+          </p>
+        </Card>
+        <Card>
+          <p className="text-sm font-semibold text-ink">Recall candidates</p>
+          <p className="mt-3 text-2xl font-semibold text-brand-700">{actionablePatients.length}</p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Candidates are prioritized before any patient-facing message is prepared.
+          </p>
+        </Card>
+        <Card>
+          <p className="text-sm font-semibold text-ink">Campaign readiness</p>
+          <p className="mt-3 text-2xl font-semibold text-brand-700">
+            {snapshot.campaignDraft.readyToContact}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Ready patients can be moved into a campaign draft after review.
+          </p>
+        </Card>
+      </section>
 
       <section className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-5 lg:p-8">
         <MetricCard label="Total patients" value={snapshot.summary.totalPatients} />
@@ -121,6 +160,30 @@ export default function RecallDashboardPage() {
             <div className="mt-5 rounded-md border border-line bg-surface p-4 text-sm leading-6 text-muted">
               Sending is intentionally not implemented yet. The MVP prepares safe worklists first;
               delivery adapters come after auth, tenant resolution, and approval flows.
+            </div>
+            <div className="mt-5 flex flex-col gap-3">
+              <button
+                type="button"
+                disabled
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white opacity-60"
+              >
+                Prepare campaign draft
+              </button>
+              {!hasPatients ? (
+                <Link
+                  href="/dashboard/import"
+                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
+                >
+                  Import patients first
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard/import"
+                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
+                >
+                  Review import data
+                </Link>
+              )}
             </div>
           </Card>
 

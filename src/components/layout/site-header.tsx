@@ -3,17 +3,20 @@ import Link from "next/link";
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard/patients", label: "Patients" },
+  { href: "/dashboard/import", label: "Import" },
   { href: "/dashboard/recall", label: "Recall" },
+  { href: "/dashboard/onboarding", label: "Onboarding" },
 ];
 
 export function SiteHeader() {
   return (
     <header className="border-b border-line bg-white">
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-6 lg:px-8">
+      <div className="mx-auto flex min-h-16 max-w-7xl flex-col items-start justify-between gap-3 px-6 py-3 sm:flex-row sm:items-center lg:px-8">
         <Link href="/" className="text-base font-semibold text-ink">
           DentalOS
         </Link>
-        <nav aria-label="Primary navigation" className="flex items-center gap-1">
+        <nav aria-label="Primary navigation" className="flex flex-wrap items-center gap-1">
           {navItems.map((item) => (
             <Link
               key={item.href}

@@ -6,6 +6,7 @@ DentalOS starts as a modular monolith: one deployable application with clear int
 
 - `tenants` - clinic accounts, memberships, permissions, and tenant resolution.
 - `patients` - patient records, lifecycle status, recall metadata, and contact preferences.
+- `patient-import` - CSV parsing, validation, masked preview, and patient draft mapping.
 - `appointments` - bookings, cancellations, no-show tracking, and reminder eligibility.
 - `notifications` - message drafts, delivery state, templates, and providers.
 - `billing` - future invoices, payments, plans, and account status.
@@ -13,7 +14,9 @@ DentalOS starts as a modular monolith: one deployable application with clear int
 
 ## Multi-Tenancy Model
 
-Tenant-owned data must include `tenantId`. Requests resolve the authenticated user and active tenant before domain logic or database access. Client-supplied tenant IDs are hints only; server-side membership and permission checks decide access.
+DentalOS MVP uses a shared application and shared PostgreSQL database. Tenant-owned data must include `tenantId`. Requests resolve the authenticated user and active tenant before domain logic or database access. Client-supplied tenant IDs are hints only; server-side membership and permission checks decide access.
+
+No fetch, update, delete, list, import, export, event, or job operation for tenant-owned data should run without tenant context. Repository functions should use names such as `getPatientForTenant(tenantId, patientId)` instead of unscoped names such as `getPatient(id)`.
 
 Background jobs and event handlers carry tenant context explicitly so asynchronous work follows the same isolation rules as request-response flows.
 
@@ -42,6 +45,7 @@ Start simple:
 - Simple jobs run through a small server-side job abstraction.
 - Domain events are published through an in-process event bus.
 - External delivery adapters stay behind module boundaries.
+- Patient import stores import batch counts and status only; raw CSV content and unnecessary PII are not stored in import metadata.
 
 Later:
 

@@ -77,6 +77,13 @@ const demoPatients: RecallPatient[] = [
   },
 ];
 
+export function getDemoRecallPatientsForTenant(tenantId: string): RecallPatient[] {
+  return demoPatients.map((patient) => ({
+    ...patient,
+    tenantId,
+  }));
+}
+
 export function getDemoRecallWorkspaceSnapshot(): RecallWorkspaceSnapshot {
   return buildRecallWorkspaceSnapshot(demoPatients, recallDemoAsOf);
 }

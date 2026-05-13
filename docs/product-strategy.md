@@ -21,6 +21,7 @@ Small to mid-sized dental clinics with an owner, practice manager, or operations
 ## MVP Scope
 
 - Clinic tenant and team membership foundation.
+- Patient import workflow for onboarding a clinic list into recall automation.
 - Patient list with recall status and contact preferences.
 - Appointment reminder queue and status tracking.
 - Recall campaign planning and simple execution states.
@@ -43,6 +44,7 @@ Avoid promising medical outcomes or exaggerated financial results. Measure workf
 - Clinical charting.
 - Insurance claims.
 - Payment processing.
+- Real SMS, email, or WhatsApp sending before approval and audit flows exist.
 - Deep PMS integrations before the recall workflow is validated.
 - Automated AI actions without human review.
 - Multi-location enterprise controls unless pilots demand them.

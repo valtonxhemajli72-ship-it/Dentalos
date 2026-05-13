@@ -29,6 +29,13 @@ const focusCards = [
     label: "inactive patients",
     detail: "Build a practical queue for dormant patient follow-up without over-automating.",
   },
+  {
+    title: "Patient import",
+    value: "CSV",
+    label: "preview workflow",
+    detail: "Paste a patient list, validate rows, and prepare recall-ready drafts.",
+    href: "/dashboard/import",
+  },
 ];
 
 const activity = [
@@ -57,7 +64,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <section className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4 lg:p-8">
+      <section className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-5 lg:p-8">
         {focusCards.map((card) => (
           <Card key={card.title}>
             <div className="flex min-h-36 flex-col justify-between">

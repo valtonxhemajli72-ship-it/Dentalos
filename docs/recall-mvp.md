@@ -8,6 +8,7 @@ The recall MVP adds the first operational wedge inside DentalOS: a prioritized q
 - A demo-data adapter in `src/modules/patients/recall-demo-data.ts`.
 - A recall workspace route at `/dashboard/recall`.
 - Prisma fields for recall due dates, preferred recall channel, last recall contact, and opt-out tracking.
+- Import readiness indicators from the patient import preview flow.
 
 The UI uses anonymized demo patient labels and does not send messages. That is intentional until authentication, tenant resolution, approval flows, and notification provider adapters exist.
 
@@ -23,6 +24,7 @@ The UI uses anonymized demo patient labels and does not send messages. That is i
 
 1. Add authentication and active tenant resolution.
 2. Replace demo data with tenant-scoped Prisma queries.
-3. Add server-side validation for recall filters and campaign draft creation.
-4. Add audit logs for campaign creation and message approval.
-5. Introduce notification provider adapters only after approval workflows are in place.
+3. Persist patient import batches and patient drafts after real auth is connected.
+4. Add server-side validation for recall filters and campaign draft creation.
+5. Add audit logs for campaign creation and message approval.
+6. Introduce notification provider adapters only after approval workflows are in place.
