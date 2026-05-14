@@ -5,6 +5,9 @@ import {
   PermissionDeniedError,
   type Permission,
 } from "@/server/auth/permissions";
+import { authOptions, isRealAuthProviderConfigured } from "@/server/auth/config";
+import { DatabaseUnavailableError, getPrismaClient } from "@/server/db";
+import { getServerSession } from "next-auth";
 
 export class AuthenticationRequiredError extends Error {
   constructor(message = "Authentication is required.") {
@@ -36,6 +39,8 @@ export type AuthUser = {
   id: string;
   email: string;
   name?: string;
+  isProvisioned: boolean;
+  source: "provider" | "demo";
 };
 
 export type AuthSession = {
@@ -59,17 +64,44 @@ export const demoAuthUser: AuthUser = {
   id: demoTenantContext.userId,
   email: demoTenantContext.userEmail ?? "demo-user@example.test",
   name: "Klinika360 Demo User",
+  isProvisioned: true,
+  source: "demo",
 };
 
+export function isDemoTenantContext(tenant: TenantContext): boolean {
+  return (
+    tenant.tenantId === demoTenantContext.tenantId && tenant.userId === demoTenantContext.userId
+  );
+}
+
 export function isDevelopmentAuthEnabled(): boolean {
-  return process.env.NODE_ENV !== "production";
+  return process.env.NODE_ENV !== "production" && process.env.DEMO_AUTH_ENABLED === "true";
 }
 
 export function isProductionAuthConfigured(): boolean {
-  return false;
+  return isRealAuthProviderConfigured();
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
+  const providerSession = await getProviderSession();
+  const providerEmail = providerSession?.user?.email;
+
+  if (providerEmail) {
+    const provisionedUser = await findProvisionedUserByEmail(providerEmail);
+
+    if (provisionedUser) {
+      return provisionedUser;
+    }
+
+    return {
+      id: "unprovisioned_provider_user",
+      email: providerEmail,
+      name: providerSession.user?.name ?? undefined,
+      isProvisioned: false,
+      source: "provider",
+    };
+  }
+
   if (isDevelopmentAuthEnabled()) {
     return demoAuthUser;
   }
@@ -98,11 +130,15 @@ export async function getCurrentTenantContext(): Promise<TenantContext | null> {
     return null;
   }
 
-  if (isDevelopmentAuthEnabled()) {
+  if (user.source === "demo" && isDevelopmentAuthEnabled()) {
     return demoTenantContext;
   }
 
-  return null;
+  if (!user.isProvisioned) {
+    return null;
+  }
+
+  return findTenantContextForUser(user);
 }
 
 export async function requireTenantContext(): Promise<TenantContext> {
@@ -191,4 +227,95 @@ export function describeAuthBoundaryError(error: unknown): string {
   }
 
   return "Access is not available.";
+}
+
+type ProvisionedUserRecord = {
+  id: string;
+  email: string;
+  name?: string | null;
+};
+
+type MembershipRecord = {
+  id: string;
+  tenantId: string;
+  userId: string;
+  role: TenantContext["role"];
+  tenant: {
+    id: string;
+    name: string;
+  };
+};
+
+type AuthDatabase = {
+  user: {
+    findUnique(args: Record<string, unknown>): Promise<ProvisionedUserRecord | null>;
+  };
+  membership: {
+    findFirst(args: Record<string, unknown>): Promise<MembershipRecord | null>;
+  };
+};
+
+async function getProviderSession() {
+  if (!isRealAuthProviderConfigured() && process.env.NODE_ENV === "production") {
+    return null;
+  }
+
+  try {
+    return getServerSession(authOptions);
+  } catch {
+    return null;
+  }
+}
+
+async function findProvisionedUserByEmail(email: string): Promise<AuthUser | null> {
+  try {
+    const db = getPrismaClient() as unknown as AuthDatabase;
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+
+    return user
+      ? {
+          id: user.id,
+          email: user.email,
+          name: user.name ?? undefined,
+          isProvisioned: true,
+          source: "provider",
+        }
+      : null;
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+async function findTenantContextForUser(user: AuthUser): Promise<TenantContext | null> {
+  try {
+    const db = getPrismaClient() as unknown as AuthDatabase;
+    const membership = await db.membership.findFirst({
+      where: { userId: user.id },
+      include: { tenant: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return membership
+      ? {
+          tenantId: membership.tenantId,
+          tenantName: membership.tenant.name,
+          userId: membership.userId,
+          userEmail: user.email,
+          membershipId: membership.id,
+          role: membership.role,
+        }
+      : null;
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError) {
+      return null;
+    }
+
+    throw error;
+  }
 }

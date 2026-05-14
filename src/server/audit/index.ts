@@ -9,9 +9,15 @@ export type AuditAction =
   | "auth.login.succeeded"
   | "auth.login.failed"
   | "auth.logout"
+  | "auth.sign_in.succeeded"
+  | "auth.sign_in.failed"
+  | "auth.sign_out"
+  | "auth.session.resolved"
   | "rbac.permission_denied"
   | "tenant.context.resolved"
   | "tenant.context_failed"
+  | "tenant.membership.resolved"
+  | "tenant.membership_missing"
   | "patient_import.previewed"
   | "patient_import.validated"
   | "patient_import.imported"
@@ -107,6 +113,71 @@ export function createAuthLoginSucceededAuditEvent(
     action: "auth.login.succeeded",
     entityType: "User",
     entityId: tenant.userId,
+    metadata,
+  });
+}
+
+export function createAuthSignInSucceededAuditEvent(
+  tenant: TenantContext,
+  metadata: { provider: "google" | "unknown" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "auth.sign_in.succeeded",
+    entityType: "User",
+    entityId: tenant.userId,
+    metadata,
+  });
+}
+
+export function createAuthSignInFailedAuditEvent(
+  tenant: TenantContext,
+  metadata: { reason: "missing_email" | "provider_error" | "unverified_email" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "auth.sign_in.failed",
+    entityType: "User",
+    metadata,
+  });
+}
+
+export function createAuthSignOutAuditEvent(tenant: TenantContext): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "auth.sign_out",
+    entityType: "User",
+    entityId: tenant.userId,
+  });
+}
+
+export function createAuthSessionResolvedAuditEvent(tenant: TenantContext): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "auth.session.resolved",
+    entityType: "User",
+    entityId: tenant.userId,
+  });
+}
+
+export function createTenantMembershipResolvedAuditEvent(tenant: TenantContext): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "tenant.membership.resolved",
+    entityType: "Membership",
+    entityId: tenant.membershipId,
+    metadata: { role: tenant.role },
+  });
+}
+
+export function createTenantMembershipMissingAuditEvent(
+  tenant: TenantContext,
+  metadata: { reason: "user_not_found" | "membership_not_found" | "database_unavailable" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "tenant.membership_missing",
+    entityType: "Membership",
     metadata,
   });
 }

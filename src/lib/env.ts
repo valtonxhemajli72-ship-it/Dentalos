@@ -1,6 +1,10 @@
 type OptionalEnvName =
   | "DATABASE_URL"
+  | "DEMO_AUTH_ENABLED"
+  | "AUTH_URL"
   | "AUTH_SECRET"
+  | "AUTH_GOOGLE_ID"
+  | "AUTH_GOOGLE_SECRET"
   | "NEXTAUTH_URL"
   | "NEXTAUTH_SECRET"
   | "OPENAI_API_KEY"
@@ -11,7 +15,11 @@ type OptionalEnvName =
 export const env = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   databaseUrl: process.env.DATABASE_URL,
+  demoAuthEnabled: process.env.DEMO_AUTH_ENABLED,
+  authUrl: process.env.AUTH_URL,
   authSecret: process.env.AUTH_SECRET,
+  authGoogleId: process.env.AUTH_GOOGLE_ID,
+  authGoogleSecret: process.env.AUTH_GOOGLE_SECRET,
   nextAuthUrl: process.env.NEXTAUTH_URL,
   nextAuthSecret: process.env.NEXTAUTH_SECRET,
   openAiApiKey: process.env.OPENAI_API_KEY,

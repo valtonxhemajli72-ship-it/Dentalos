@@ -66,6 +66,7 @@ export default async function DashboardPage() {
   }
 
   const tenantName = tenant.tenantName ?? APP_NAME;
+  const authStatus = isDevelopmentAuthEnabled() ? "demo mode" : "provider session";
 
   return (
     <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
@@ -128,7 +129,7 @@ export default async function DashboardPage() {
           <h2 className="text-base font-semibold text-ink">Foundation status</h2>
           <dl className="mt-5 space-y-4">
             {[
-              ["Auth", "dev-only boundary"],
+              ["Auth", authStatus],
               ["Tenant isolation", "enforced by repositories"],
               ["Role access", tenant.role],
               ["Notifications", "module boundary"],
