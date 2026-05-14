@@ -54,6 +54,7 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - OAuth sign-in identifies a user; tenant access still requires a matching `User` and `Membership`.
 - Active tenant selection must be revalidated against memberships on every request.
 - Staff invitations must store only `tokenHash`; never log or persist raw invitation tokens.
+- Invitation acceptance must require an authenticated user, validate the raw token server-side, enforce invited-email match, and create membership only for the tenant on the invitation record.
 - Do not allow role changes or membership deactivation that would remove the last active `OWNER`.
 - Server actions that write tenant-owned data must call `requirePermission()` before parsing or persisting input.
 - Background jobs and event handlers must carry tenant context explicitly.
@@ -171,7 +172,7 @@ Review every change with these questions:
 
 ## Intentionally Not Implemented Yet
 
-- Invitation acceptance route, staff invitation email delivery, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
+- Staff invitation email delivery, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

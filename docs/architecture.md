@@ -36,6 +36,8 @@ RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages re
 
 Tenant switching stores the selected tenant ID in an HTTP-only cookie. The selected value is never trusted by itself; `resolveActiveTenantForUser` revalidates it against the authenticated user’s active memberships and falls back to the first valid membership when needed. Team management and staff invitations live in the tenants module. Invitation records store `tokenHash` only and do not send email yet.
 
+Invitation acceptance lives at `/invitations/accept`. The page requires authentication before validating the invitation token. The server action hashes the raw token, validates the invitation record, enforces invited-email match, derives tenant and role from the invitation, creates or reactivates the membership, marks the invitation accepted, switches the active tenant to the accepted tenant, and records safe audit events. Raw tokens are never persisted or logged, and `tokenHash` is never returned to the client.
+
 ## Backend Boundary
 
 Next.js is the current web and BFF layer. It renders dashboard screens, resolves auth and tenant context, validates request input, checks permissions, calls domain modules, and returns safe UI states. It should not become the permanent owner of every backend responsibility.

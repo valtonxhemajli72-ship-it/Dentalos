@@ -98,6 +98,7 @@ Optional integration placeholders:
 - `npm run format` - format the repository with Prettier.
 - `npm run format:check` - check formatting.
 - `npm run auth:validate` - run dependency-free RBAC mapping checks.
+- `npm run invitation:validate` - run dependency-free invitation acceptance guardrail checks.
 - `npm run db:validate` - validate the Prisma schema.
 - `npm run db:seed` - manually seed fake demo data after a database and schema are available.
 
@@ -112,6 +113,8 @@ The MVP tenancy model is a shared app and shared PostgreSQL database. Every tena
 Auth uses `next-auth` with Google OAuth as the first real provider path when `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, and `AUTH_SECRET` are configured. OAuth sessions map by email to an existing `User`, then to `Membership`, then to tenant context. Development demo auth requires `DEMO_AUTH_ENABLED="true"` and is ignored in production. Permissions are defined in `src/server/auth/permissions.ts` and cover patients, recall, campaigns, notifications, settings, audit, users, and billing read access.
 
 Tenant switching is backed by validated memberships. When a user has multiple memberships, the selected tenant is stored in an HTTP-only cookie and revalidated against the user’s memberships on every request. Team access management starts at `/dashboard/settings/team`; Owner/Admin users can create or revoke invitation records and update non-owner roles. No invitation email is sent yet, and only invitation token hashes are stored.
+
+Invitation acceptance is available at `/invitations/accept?token=...`. The accepting user must authenticate with the invited email address; the server hashes and validates the token, derives tenant and role from the invitation record, creates or reuses a tenant membership safely, and records audit events without raw tokens, token hashes, or email addresses in metadata.
 
 The current patient import workflow helps a clinic paste a CSV, validate rows, preview masked contact indicators, save valid tenant-scoped patient records when a database is configured, and prepare recall review. It creates a `PatientImportBatch` with counts only. It does not store raw CSV content and does not send email, SMS, WhatsApp, payment, or AI requests.
 
@@ -164,14 +167,13 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 
 ## MVP Roadmap
 
-1. Add invitation acceptance and tenant/user provisioning around the OAuth login flow.
-2. Add staff invitation email delivery behind a notification adapter.
-3. Build patient import review history and duplicate resolution.
-4. Create recall campaign draft and approval flows.
-5. Add appointment reminder workflows.
-6. Add notification delivery adapters behind safe interfaces.
-7. Add audit logs and operational reporting.
-8. Pilot with a small clinic and measure workflow completion, not medical outcomes.
+1. Add staff invitation email delivery behind a notification adapter.
+2. Build patient import review history and duplicate resolution.
+3. Create recall campaign draft and approval flows.
+4. Add appointment reminder workflows.
+5. Add notification delivery adapters behind safe interfaces.
+6. Add audit logs and operational reporting.
+7. Pilot with a small clinic and measure workflow completion, not medical outcomes.
 
 ## Tenant Isolation Roadmap
 
@@ -183,7 +185,7 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 
 ## Intentionally Not Implemented Yet
 
-- Invitation acceptance route, staff invitation email delivery, tenant switching polish, and password auth.
+- Staff invitation email delivery, tenant switching polish, and password auth.
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

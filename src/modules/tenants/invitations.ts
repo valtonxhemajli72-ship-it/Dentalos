@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { maskEmail } from "@/lib/privacy";
 import { assertTenantAccess, type TenantContext, type TenantRole } from "@/modules/tenants";
 import { isManageableRoleForActor } from "@/modules/tenants/memberships";
@@ -13,11 +13,18 @@ type TenantInvitationRecord = {
   email: string;
   role: TenantRole;
   status: TenantInvitationStatus;
+  tokenHash?: string;
+  invitedByUserId?: string;
+  acceptedByUserId?: string | null;
   expiresAt: Date;
   acceptedAt?: Date | null;
   revokedAt?: Date | null;
   createdAt: Date;
   updatedAt?: Date;
+  tenant?: {
+    id: string;
+    name: string;
+  };
 };
 
 type MembershipRecord = {
@@ -28,7 +35,13 @@ type MembershipRecord = {
   deactivatedAt?: Date | null;
 };
 
-type TenantInvitationDatabase = {
+type InvitationUserRecord = {
+  id: string;
+  email: string;
+  name?: string | null;
+};
+
+type TenantInvitationRepositoryDatabase = {
   tenantInvitation: {
     findMany(args: Record<string, unknown>): Promise<TenantInvitationRecord[]>;
     findFirst(args: Record<string, unknown>): Promise<TenantInvitationRecord | null>;
@@ -41,6 +54,16 @@ type TenantInvitationDatabase = {
     create(args: Record<string, unknown>): Promise<MembershipRecord>;
     update(args: Record<string, unknown>): Promise<MembershipRecord>;
   };
+  user: {
+    findUnique(args: Record<string, unknown>): Promise<InvitationUserRecord | null>;
+    create(args: Record<string, unknown>): Promise<InvitationUserRecord>;
+  };
+};
+
+type TenantInvitationDatabase = TenantInvitationRepositoryDatabase & {
+  $transaction?<T>(
+    callback: (transaction: TenantInvitationRepositoryDatabase) => Promise<T>,
+  ): Promise<T>;
 };
 
 type TenantInvitationOptions = {
@@ -59,6 +82,50 @@ export type TenantInvitationListItem = {
   createdAt: Date;
 };
 
+export type TenantInvitationCreationResult = TenantInvitationListItem & {
+  deliveryToken: string;
+};
+
+export type TenantInvitationLookupItem = TenantInvitationListItem & {
+  tenantName?: string;
+};
+
+export type InvitationAcceptancePreviewStatus =
+  | "ready"
+  | "invalid"
+  | "expired"
+  | "revoked"
+  | "already_accepted"
+  | "email_mismatch"
+  | "owner_role_blocked";
+
+export type InvitationAcceptancePreview = {
+  status: InvitationAcceptancePreviewStatus;
+  invitation?: TenantInvitationLookupItem;
+};
+
+export type InvitationAcceptanceStatus =
+  | "accepted"
+  | "already_member"
+  | "invalid"
+  | "expired"
+  | "revoked"
+  | "already_accepted"
+  | "email_mismatch"
+  | "owner_role_blocked";
+
+export type InvitationAcceptanceResult = {
+  status: InvitationAcceptanceStatus;
+  tenantId?: string;
+  tenantName?: string;
+  invitationId?: string;
+  membershipId?: string;
+  actorUserId?: string;
+  role?: TenantRole;
+  membershipCreated?: boolean;
+  membershipReactivated?: boolean;
+};
+
 export async function createTenantInvitation(
   input: {
     tenantId: string;
@@ -68,7 +135,7 @@ export async function createTenantInvitation(
   },
   actorContext: TenantContext,
   options: TenantInvitationOptions = {},
-): Promise<TenantInvitationListItem> {
+): Promise<TenantInvitationCreationResult> {
   assertTenantAccess(actorContext, input.tenantId);
   assertPermission(actorContext.role, "invitation:create");
 
@@ -76,6 +143,7 @@ export async function createTenantInvitation(
   assertRoleCanBeInvited(actorContext.role, role);
 
   const email = normalizeInvitationEmail(input.email);
+  const rawToken = generateInvitationToken();
   const db = getInvitationDb(options);
   const invitation = await db.tenantInvitation.create({
     data: {
@@ -83,13 +151,16 @@ export async function createTenantInvitation(
       email,
       role,
       status: "PENDING",
-      tokenHash: createInvitationTokenHash(),
+      tokenHash: hashInvitationToken(rawToken),
       invitedByUserId: actorContext.userId,
       expiresAt: input.expiresAt ?? defaultInvitationExpiry(),
     },
   });
 
-  return mapInvitationRecordToListItem(invitation);
+  return {
+    ...mapInvitationRecordToListItem(invitation),
+    deliveryToken: rawToken,
+  };
 }
 
 export async function listTenantInvitations(
@@ -141,83 +212,70 @@ export async function revokeTenantInvitation(
   return mapInvitationRecordToListItem(updated);
 }
 
-export async function acceptTenantInvitation(
-  rawInvitationToken: string,
-  acceptedBy: { userId: string; email: string },
+export async function getInvitationByTokenHash(
+  tokenHash: string,
   options: TenantInvitationOptions = {},
-): Promise<TenantInvitationListItem> {
+): Promise<TenantInvitationLookupItem | null> {
+  if (!isValidInvitationTokenHash(tokenHash)) {
+    return null;
+  }
+
   const db = getInvitationDb(options);
-  const tokenHash = hashInvitationToken(rawInvitationToken);
   const invitation = await db.tenantInvitation.findFirst({
     where: {
       tokenHash,
-      status: "PENDING",
+    },
+    include: {
+      tenant: true,
     },
   });
 
-  if (!invitation) {
-    throw new Error("Invitation was not found or is no longer pending.");
-  }
-
-  if (invitation.expiresAt < new Date()) {
-    const expired = await db.tenantInvitation.update({
-      where: { id: invitation.id },
-      data: {
-        status: "EXPIRED",
-      },
-    });
-    return mapInvitationRecordToListItem(expired);
-  }
-
-  if (normalizeInvitationEmail(acceptedBy.email) !== invitation.email) {
-    throw new Error("Invitation email does not match the authenticated user.");
-  }
-
-  const existingMembership = await db.membership.findFirst({
-    where: {
-      tenantId: invitation.tenantId,
-      userId: acceptedBy.userId,
-    },
-  });
-
-  if (existingMembership) {
-    await db.membership.update({
-      where: { id: existingMembership.id },
-      data: {
-        role: invitation.role,
-        deactivatedAt: null,
-      },
-    });
-  } else {
-    await db.membership.create({
-      data: {
-        tenantId: invitation.tenantId,
-        userId: acceptedBy.userId,
-        role: invitation.role,
-      },
-    });
-  }
-
-  const accepted = await db.tenantInvitation.update({
-    where: { id: invitation.id },
-    data: {
-      status: "ACCEPTED",
-      acceptedByUserId: acceptedBy.userId,
-      acceptedAt: new Date(),
-    },
-  });
-
-  return mapInvitationRecordToListItem(accepted);
+  return invitation ? mapInvitationRecordToLookupItem(invitation) : null;
 }
 
-export async function markExpiredInvitations(
+export async function getInvitationAcceptancePreview(
+  rawInvitationToken: string,
+  acceptedBy: { email: string },
+  options: TenantInvitationOptions = {},
+): Promise<InvitationAcceptancePreview> {
+  const invitation = await getInvitationRecordForToken(rawInvitationToken, options);
+
+  if (!invitation) {
+    return { status: "invalid" };
+  }
+
+  const validationStatus = getInvitationValidationStatus(invitation, acceptedBy.email, new Date());
+
+  return {
+    status: validationStatus === "pending" ? "ready" : validationStatus,
+    invitation: mapInvitationRecordToLookupItem(invitation),
+  };
+}
+
+export async function acceptTenantInvitation(
+  input: {
+    rawInvitationToken: string;
+    authenticatedUser: {
+      id: string;
+      email: string;
+      name?: string;
+      isProvisioned?: boolean;
+    };
+    now?: Date;
+  },
+  options: TenantInvitationOptions = {},
+): Promise<InvitationAcceptanceResult> {
+  const db = getInvitationDb(options);
+  const run = (transaction: TenantInvitationRepositoryDatabase) =>
+    acceptTenantInvitationInTransaction(transaction, input);
+
+  return db.$transaction ? db.$transaction(run) : run(db);
+}
+
+export async function markExpiredInvitationsForTenant(
   tenantId: string,
-  actorContext: TenantContext,
   options: TenantInvitationOptions = {},
 ): Promise<{ count: number }> {
-  assertTenantAccess(actorContext, tenantId);
-  assertPermission(actorContext.role, "invitation:revoke");
-
   const db = getInvitationDb(options);
   return db.tenantInvitation.updateMany({
     where: {
@@ -233,16 +291,223 @@ export async function markExpiredInvitations(
   });
 }
 
+export async function markExpiredInvitations(
+  tenantId: string,
+  actorContext: TenantContext,
+  options: TenantInvitationOptions = {},
+): Promise<{ count: number }> {
+  assertTenantAccess(actorContext, tenantId);
+  assertPermission(actorContext.role, "invitation:revoke");
+
+  return markExpiredInvitationsForTenant(tenantId, options);
+}
+
+export function generateInvitationToken(): string {
+  return randomBytes(32).toString("hex");
+}
+
 export function hashInvitationToken(rawInvitationToken: string): string {
-  return createHash("sha256").update(rawInvitationToken).digest("hex");
+  return createHash("sha256").update(normalizeInvitationToken(rawInvitationToken)).digest("hex");
+}
+
+export function verifyInvitationToken(rawInvitationToken: string, tokenHash: string): boolean {
+  if (!isValidInvitationTokenHash(tokenHash)) {
+    return false;
+  }
+
+  const candidateHash = hashInvitationToken(rawInvitationToken);
+  const candidate = Buffer.from(candidateHash, "hex");
+  const expected = Buffer.from(tokenHash, "hex");
+
+  return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
 
 function getInvitationDb(options: TenantInvitationOptions): TenantInvitationDatabase {
   return (options.db ?? getPrismaClient()) as unknown as TenantInvitationDatabase;
 }
 
-function createInvitationTokenHash(): string {
-  return hashInvitationToken(randomBytes(32).toString("hex"));
+async function acceptTenantInvitationInTransaction(
+  db: TenantInvitationRepositoryDatabase,
+  input: Parameters<typeof acceptTenantInvitation>[0],
+): Promise<InvitationAcceptanceResult> {
+  const invitation = await getInvitationRecordForToken(input.rawInvitationToken, { db });
+
+  if (!invitation) {
+    return { status: "invalid" };
+  }
+
+  const now = input.now ?? new Date();
+  const validationStatus = getInvitationValidationStatus(
+    invitation,
+    input.authenticatedUser.email,
+    now,
+  );
+
+  if (validationStatus === "expired" && invitation.status === "PENDING") {
+    const expired = await db.tenantInvitation.update({
+      where: { id: invitation.id },
+      data: {
+        status: "EXPIRED",
+      },
+      include: {
+        tenant: true,
+      },
+    });
+
+    return buildAcceptanceResult("expired", expired);
+  }
+
+  if (validationStatus !== "pending") {
+    return buildAcceptanceResult(validationStatus, invitation);
+  }
+
+  const user = await findOrCreateInvitationUser(db, input.authenticatedUser);
+  const existingMembership = await db.membership.findFirst({
+    where: {
+      tenantId: invitation.tenantId,
+      userId: user.id,
+    },
+  });
+
+  let membership = existingMembership;
+  let status: InvitationAcceptanceStatus = "accepted";
+  let membershipCreated = false;
+  let membershipReactivated = false;
+
+  if (existingMembership?.deactivatedAt) {
+    membership = await db.membership.update({
+      where: { id: existingMembership.id },
+      data: {
+        role: invitation.role,
+        deactivatedAt: null,
+      },
+    });
+    membershipReactivated = true;
+  } else if (existingMembership) {
+    status = "already_member";
+  } else {
+    membership = await db.membership.create({
+      data: {
+        tenantId: invitation.tenantId,
+        userId: user.id,
+        role: invitation.role,
+      },
+    });
+    membershipCreated = true;
+  }
+
+  const accepted = await db.tenantInvitation.update({
+    where: { id: invitation.id },
+    data: {
+      status: "ACCEPTED",
+      acceptedByUserId: user.id,
+      acceptedAt: now,
+    },
+    include: {
+      tenant: true,
+    },
+  });
+
+  return {
+    ...buildAcceptanceResult(status, accepted),
+    actorUserId: user.id,
+    membershipId: membership?.id,
+    membershipCreated,
+    membershipReactivated,
+  };
+}
+
+async function getInvitationRecordForToken(
+  rawInvitationToken: string,
+  options: TenantInvitationOptions,
+): Promise<TenantInvitationRecord | null> {
+  const normalizedToken = normalizeInvitationToken(rawInvitationToken);
+
+  if (!normalizedToken) {
+    return null;
+  }
+
+  const tokenHash = hashInvitationToken(normalizedToken);
+  const db = getInvitationDb(options);
+  const invitation = await db.tenantInvitation.findFirst({
+    where: {
+      tokenHash,
+    },
+    include: {
+      tenant: true,
+    },
+  });
+
+  if (!invitation?.tokenHash || !verifyInvitationToken(normalizedToken, invitation.tokenHash)) {
+    return null;
+  }
+
+  return invitation;
+}
+
+async function findOrCreateInvitationUser(
+  db: TenantInvitationRepositoryDatabase,
+  authenticatedUser: { email: string; name?: string },
+): Promise<InvitationUserRecord> {
+  const email = normalizeInvitationEmail(authenticatedUser.email);
+  const existing = await db.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  return db.user.create({
+    data: {
+      email,
+      name: authenticatedUser.name,
+    },
+  });
+}
+
+function buildAcceptanceResult(
+  status: InvitationAcceptanceStatus,
+  invitation: TenantInvitationRecord,
+): InvitationAcceptanceResult {
+  return {
+    status,
+    tenantId: invitation.tenantId,
+    tenantName: invitation.tenant?.name,
+    invitationId: invitation.id,
+    actorUserId: invitation.acceptedByUserId ?? undefined,
+    role: invitation.role,
+  };
+}
+
+function getInvitationValidationStatus(
+  invitation: TenantInvitationRecord,
+  authenticatedEmail: string,
+  now: Date,
+): Exclude<InvitationAcceptancePreviewStatus, "ready"> | "pending" {
+  if (invitation.status === "ACCEPTED") {
+    return "already_accepted";
+  }
+
+  if (invitation.status === "REVOKED") {
+    return "revoked";
+  }
+
+  if (invitation.status === "EXPIRED" || invitation.expiresAt <= now) {
+    return "expired";
+  }
+
+  if (invitation.role === "OWNER") {
+    return "owner_role_blocked";
+  }
+
+  if (normalizeInvitationEmail(authenticatedEmail) !== normalizeInvitationEmail(invitation.email)) {
+    return "email_mismatch";
+  }
+
+  return "pending";
 }
 
 function defaultInvitationExpiry(): Date {
@@ -259,6 +524,14 @@ function normalizeInvitationEmail(email: string): string {
   }
 
   return normalized;
+}
+
+function normalizeInvitationToken(rawInvitationToken: string): string {
+  return rawInvitationToken.trim();
+}
+
+function isValidInvitationTokenHash(tokenHash: string): boolean {
+  return /^[a-f0-9]{64}$/i.test(tokenHash);
 }
 
 async function requireInvitationForTenant(
@@ -281,6 +554,10 @@ async function requireInvitationForTenant(
 }
 
 function assertRoleCanBeInvited(actorRole: TenantRole, invitedRole: TenantRole): void {
+  if (invitedRole === "OWNER") {
+    throw new Error("Owner invitations require a separate reviewed owner transfer workflow.");
+  }
+
   if (invitedRole === "CLINICIAN") {
     throw new Error("Use DOCTOR for new clinical staff invitations.");
   }
@@ -288,6 +565,15 @@ function assertRoleCanBeInvited(actorRole: TenantRole, invitedRole: TenantRole):
   if (!isManageableRoleForActor(actorRole, invitedRole)) {
     throw new Error("Actor role cannot invite the requested role.");
   }
+}
+
+function mapInvitationRecordToLookupItem(
+  invitation: TenantInvitationRecord,
+): TenantInvitationLookupItem {
+  return {
+    ...mapInvitationRecordToListItem(invitation),
+    tenantName: invitation.tenant?.name,
+  };
 }
 
 function mapInvitationRecordToListItem(
