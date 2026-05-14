@@ -22,6 +22,20 @@ Background jobs and event handlers carry tenant context explicitly so asynchrono
 
 Tenant isolation helpers live in `src/modules/tenants`. Use `requireTenantId`, `createTenantScopedWhere`, `assertTenantScopedQuery`, and `assertTenantOwnedData` to make scope reviewable in code.
 
+## Local Database Runtime
+
+Local development uses Docker Compose PostgreSQL, Prisma migrations, and a deterministic fake seed dataset. The seeded data mirrors the development auth contract so private dashboard routes can resolve a real `User`, `Membership`, and `Tenant` when `DEMO_AUTH_ENABLED="true"`.
+
+```text
+docker compose up -d
+  -> PostgreSQL klinika360_dev
+  -> npm run db:migrate
+  -> npm run db:seed
+  -> npm run dev
+```
+
+The seed creates tenant-owned records with explicit `tenantId`, stores only invitation token hashes, and writes audit metadata with counts and IDs only. This runtime is for local development and demo validation; staging and production database provisioning, backups, PITR, and connection pooling remain separate operational work.
+
 ## Request Flow
 
 ```text

@@ -8,6 +8,7 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 
 - Keep real secrets out of Git.
 - Use `.env.example` for placeholders only.
+- Copy `.env.example` to `.env.local` for local development and keep `.env.local` untracked.
 - Do not print or paste `.env` values in logs, issues, commits, or chat.
 - Rotate any secret that is accidentally committed or exposed.
 - Use least-privilege provider keys when integrations are introduced.
@@ -34,8 +35,9 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 
 - Private routes require authentication and tenant context through `src/server/auth`.
 - NextAuth is wired with Google OAuth as the first real provider path when provider credentials are configured.
-- Development demo auth is deterministic, disabled by default, and only active outside production when `DEMO_AUTH_ENABLED="true"`.
+- Development demo auth is deterministic and only active outside production when `DEMO_AUTH_ENABLED="true"`.
 - Production ignores demo auth and fails closed when no real provider/session exists.
+- Local demo seed data must match the deterministic demo user and memberships without weakening production auth.
 - Users access tenant data through memberships.
 - OAuth sessions map by email to an existing `User`; tenant access requires a matching `Membership`.
 - Active tenant selection is stored as a cookie but revalidated against membership records on every request.
@@ -67,6 +69,14 @@ Audit logs should cover authentication-sensitive actions, membership changes, ex
 Patient import audit metadata must use counts and identifiers only, such as row counts, valid row counts, invalid row counts, and import batch IDs. Do not store raw names, emails, phone numbers, notes, message bodies, or CSV content in audit metadata.
 
 Import persistence must store only normalized patient records and import counts. Raw pasted CSV is never stored.
+
+## Local Database Runtime
+
+- `docker-compose.yml` is for local PostgreSQL only and contains no production credentials.
+- Seed data must be synthetic, clearly fake, and safe for screenshots or demos.
+- The seed script may create patient-shaped records for local workflows, but it must not use real clinic, staff, or patient data.
+- Pending invitation seed records must persist only `tokenHash`; raw invitation tokens must not appear in logs, docs, or committed seed data.
+- Seed audit metadata should contain counts, statuses, booleans, and IDs only.
 
 ## Dependency And Repository Security
 
