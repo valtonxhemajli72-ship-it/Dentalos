@@ -4,7 +4,12 @@ import { PrivateRouteState } from "@/components/layout/private-route-state";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { APP_NAME } from "@/lib/constants";
-import { isAuthBoundaryError, isDevelopmentAuthEnabled, requirePermission } from "@/server/auth";
+import {
+  isAuthBoundaryError,
+  isDemoTenantContext,
+  isDevelopmentAuthEnabled,
+  requirePermission,
+} from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +62,10 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
+    <DashboardShell
+      tenant={tenant}
+      isDemoMode={isDevelopmentAuthEnabled() && isDemoTenantContext(tenant)}
+    >
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <Badge>Pilot onboarding</Badge>
         <h1 className="mt-3 text-3xl font-semibold text-ink">Clinic onboarding workflow</h1>

@@ -109,6 +109,8 @@ The MVP tenancy model is a shared app and shared PostgreSQL database. Every tena
 
 Auth uses `next-auth` with Google OAuth as the first real provider path when `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, and `AUTH_SECRET` are configured. OAuth sessions map by email to an existing `User`, then to `Membership`, then to tenant context. Development demo auth requires `DEMO_AUTH_ENABLED="true"` and is ignored in production. Permissions are defined in `src/server/auth/permissions.ts` and cover patients, recall, campaigns, notifications, settings, audit, users, and billing read access.
 
+Tenant switching is backed by validated memberships. When a user has multiple memberships, the selected tenant is stored in an HTTP-only cookie and revalidated against the user’s memberships on every request. Team access management starts at `/dashboard/settings/team`; Owner/Admin users can create or revoke invitation records and update non-owner roles. No invitation email is sent yet, and only invitation token hashes are stored.
+
 The current patient import workflow helps a clinic paste a CSV, validate rows, preview masked contact indicators, save valid tenant-scoped patient records when a database is configured, and prepare recall review. It creates a `PatientImportBatch` with counts only. It does not store raw CSV content and does not send email, SMS, WhatsApp, payment, or AI requests.
 
 See:
@@ -153,8 +155,8 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 
 ## MVP Roadmap
 
-1. Add tenant switching and user management for invited clinic staff.
-2. Add tenant/user provisioning around the OAuth login flow.
+1. Add invitation acceptance and tenant/user provisioning around the OAuth login flow.
+2. Add staff invitation email delivery behind a notification adapter.
 3. Build patient import review history and duplicate resolution.
 4. Create recall campaign draft and approval flows.
 5. Add appointment reminder workflows.
@@ -172,7 +174,7 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 
 ## Intentionally Not Implemented Yet
 
-- Tenant switching UI, invitation flow, staff management UI, and password auth.
+- Invitation acceptance route, staff invitation email delivery, tenant switching polish, and password auth.
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

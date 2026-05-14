@@ -62,13 +62,22 @@ enum PatientImportStatus {
   CANCELLED
 }
 
+enum TenantInvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
 model Tenant {
-  id            String                @id @default(cuid())
-  name          String
-  slug          String                @unique
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-  memberships   Membership[]
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  memberships Membership[]
+  invitations TenantInvitation[]
+
   patients      Patient[]
   appointments  Appointment[]
   campaigns     RecallCampaign[]
@@ -78,28 +87,57 @@ model Tenant {
 }
 
 model User {
-  id            String               @id @default(cuid())
-  email         String               @unique
-  name          String?
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  memberships   Membership[]
-  auditLogs     AuditLog[]
-  importBatches PatientImportBatch[]
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+
+  auditLogs           AuditLog[]
+  importBatches       PatientImportBatch[]
+  sentInvitations     TenantInvitation[]   @relation("TenantInvitationInvitedBy")
+  acceptedInvitations TenantInvitation[]   @relation("TenantInvitationAcceptedBy")
 }
 
 model Membership {
-  id        String         @id @default(cuid())
-  tenantId  String
-  userId    String
-  role      MembershipRole @default(STAFF)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String         @id @default(cuid())
+  tenantId      String
+  userId        String
+  role          MembershipRole @default(STAFF)
+  deactivatedAt DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, userId])
+  @@index([tenantId, role])
   @@index([userId])
+}
+
+model TenantInvitation {
+  id               String                 @id @default(cuid())
+  tenantId         String
+  email            String
+  role             MembershipRole         @default(STAFF)
+  status           TenantInvitationStatus @default(PENDING)
+  tokenHash        String                 @unique
+  invitedByUserId  String
+  acceptedByUserId String?
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  tenant           Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invitedBy        User                   @relation("TenantInvitationInvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  acceptedBy       User?                  @relation("TenantInvitationAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, email])
+  @@index([invitedByUserId])
+  @@index([acceptedByUserId])
 }
 
 model Patient {

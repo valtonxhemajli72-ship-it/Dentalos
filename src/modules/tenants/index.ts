@@ -22,6 +22,7 @@ export const tenantOwnedModels = [
   "RecallCampaign",
   "NotificationMessage",
   "PatientImportBatch",
+  "TenantInvitation",
   "AuditLog",
 ] as const;
 

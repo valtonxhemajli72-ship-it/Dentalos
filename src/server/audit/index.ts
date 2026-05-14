@@ -18,6 +18,15 @@ export type AuditAction =
   | "tenant.context_failed"
   | "tenant.membership.resolved"
   | "tenant.membership_missing"
+  | "tenant.switched"
+  | "tenant.switch_failed"
+  | "invitation.created"
+  | "invitation.revoked"
+  | "invitation.accepted"
+  | "invitation.expired"
+  | "membership.role_updated"
+  | "membership.deactivated"
+  | "membership.last_owner_protection_triggered"
   | "patient_import.previewed"
   | "patient_import.validated"
   | "patient_import.imported"
@@ -179,6 +188,123 @@ export function createTenantMembershipMissingAuditEvent(
     action: "tenant.membership_missing",
     entityType: "Membership",
     metadata,
+  });
+}
+
+export function createTenantSwitchedAuditEvent(
+  tenant: TenantContext,
+  metadata: { fromTenantSelected: boolean },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "tenant.switched",
+    entityType: "Tenant",
+    entityId: tenant.tenantId,
+    metadata,
+  });
+}
+
+export function createTenantSwitchFailedAuditEvent(
+  tenant: TenantContext,
+  metadata: { reason: "membership_missing" | "invalid_selection" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "tenant.switch_failed",
+    entityType: "Tenant",
+    entityId: tenant.tenantId,
+    metadata,
+  });
+}
+
+export function createInvitationCreatedAuditEvent(
+  tenant: TenantContext,
+  invitationId: string,
+  metadata: { role: string; status: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "invitation.created",
+    entityType: "TenantInvitation",
+    entityId: invitationId,
+    metadata,
+  });
+}
+
+export function createInvitationRevokedAuditEvent(
+  tenant: TenantContext,
+  invitationId: string,
+  metadata: { status: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "invitation.revoked",
+    entityType: "TenantInvitation",
+    entityId: invitationId,
+    metadata,
+  });
+}
+
+export function createInvitationAcceptedAuditEvent(
+  tenant: TenantContext,
+  invitationId: string,
+  metadata: { role: string; status: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "invitation.accepted",
+    entityType: "TenantInvitation",
+    entityId: invitationId,
+    metadata,
+  });
+}
+
+export function createInvitationExpiredAuditEvent(
+  tenant: TenantContext,
+  metadata: { expiredCount: number },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "invitation.expired",
+    entityType: "TenantInvitation",
+    metadata,
+  });
+}
+
+export function createMembershipRoleUpdatedAuditEvent(
+  tenant: TenantContext,
+  membershipId: string,
+  metadata: { previousRole: string; nextRole: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "membership.role_updated",
+    entityType: "Membership",
+    entityId: membershipId,
+    metadata,
+  });
+}
+
+export function createMembershipDeactivatedAuditEvent(
+  tenant: TenantContext,
+  membershipId: string,
+  metadata: { previousRole: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "membership.deactivated",
+    entityType: "Membership",
+    entityId: membershipId,
+    metadata,
+  });
+}
+
+export function createLastOwnerProtectionAuditEvent(tenant: TenantContext): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "membership.last_owner_protection_triggered",
+    entityType: "Membership",
+    metadata: { protected: true },
   });
 }
 

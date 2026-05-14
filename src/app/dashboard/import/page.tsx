@@ -3,7 +3,12 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PrivateRouteState } from "@/components/layout/private-route-state";
 import { Badge } from "@/components/ui/badge";
 import { PatientImportWorkflow } from "@/app/dashboard/import/patient-import-workflow";
-import { isAuthBoundaryError, isDevelopmentAuthEnabled, requirePermission } from "@/server/auth";
+import {
+  isAuthBoundaryError,
+  isDemoTenantContext,
+  isDevelopmentAuthEnabled,
+  requirePermission,
+} from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +28,10 @@ export default async function PatientImportPage() {
   const tenantName = tenant.tenantName ?? "Selected clinic";
 
   return (
-    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
+    <DashboardShell
+      tenant={tenant}
+      isDemoMode={isDevelopmentAuthEnabled() && isDemoTenantContext(tenant)}
+    >
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>

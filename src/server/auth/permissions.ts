@@ -13,7 +13,14 @@ export type Permission =
   | "settings:read"
   | "settings:update"
   | "audit:read"
+  | "tenant:read"
+  | "tenant:switch"
+  | "user:read"
   | "user:manage"
+  | "invitation:create"
+  | "invitation:revoke"
+  | "membership:update"
+  | "membership:deactivate"
   | "billing:read";
 
 export class PermissionDeniedError extends Error {
@@ -41,7 +48,14 @@ const allPermissions = [
   "settings:read",
   "settings:update",
   "audit:read",
+  "tenant:read",
+  "tenant:switch",
+  "user:read",
   "user:manage",
+  "invitation:create",
+  "invitation:revoke",
+  "membership:update",
+  "membership:deactivate",
   "billing:read",
 ] as const satisfies readonly Permission[];
 
@@ -60,10 +74,17 @@ const rolePermissions: Record<TenantRole, readonly Permission[]> = {
     "settings:read",
     "settings:update",
     "audit:read",
+    "tenant:read",
+    "tenant:switch",
+    "user:read",
     "user:manage",
+    "invitation:create",
+    "invitation:revoke",
+    "membership:update",
+    "membership:deactivate",
     "billing:read",
   ],
-  DOCTOR: ["patient:read", "patient:update", "recall:read", "campaign:prepare"],
+  DOCTOR: ["patient:read", "patient:update", "recall:read", "campaign:prepare", "tenant:switch"],
   RECEPTIONIST: [
     "patient:read",
     "patient:create",
@@ -72,6 +93,7 @@ const rolePermissions: Record<TenantRole, readonly Permission[]> = {
     "recall:create",
     "campaign:prepare",
     "notification:read",
+    "tenant:switch",
   ],
   MANAGER: [
     "patient:read",
@@ -80,12 +102,15 @@ const rolePermissions: Record<TenantRole, readonly Permission[]> = {
     "recall:update",
     "campaign:prepare",
     "notification:read",
+    "tenant:read",
+    "tenant:switch",
+    "user:read",
     "settings:read",
     "audit:read",
     "billing:read",
   ],
-  CLINICIAN: ["patient:read", "patient:update", "recall:read", "campaign:prepare"],
-  STAFF: ["patient:read", "recall:read", "notification:read"],
+  CLINICIAN: ["patient:read", "patient:update", "recall:read", "campaign:prepare", "tenant:switch"],
+  STAFF: ["patient:read", "recall:read", "notification:read", "tenant:switch"],
 };
 
 export function getPermissionsForRole(role: TenantRole): readonly Permission[] {

@@ -6,6 +6,7 @@ import {
   type Permission,
 } from "@/server/auth/permissions";
 import { authOptions, isRealAuthProviderConfigured } from "@/server/auth/config";
+import { resolveActiveTenantForUser } from "@/server/auth/tenant-session";
 import { DatabaseUnavailableError, getPrismaClient } from "@/server/db";
 import { getServerSession } from "next-auth";
 
@@ -70,7 +71,8 @@ export const demoAuthUser: AuthUser = {
 
 export function isDemoTenantContext(tenant: TenantContext): boolean {
   return (
-    tenant.tenantId === demoTenantContext.tenantId && tenant.userId === demoTenantContext.userId
+    tenant.userId === demoTenantContext.userId &&
+    tenant.tenantId.startsWith("tenant_demo_klinika360")
   );
 }
 
@@ -130,15 +132,23 @@ export async function getCurrentTenantContext(): Promise<TenantContext | null> {
     return null;
   }
 
-  if (user.source === "demo" && isDevelopmentAuthEnabled()) {
-    return demoTenantContext;
-  }
-
-  if (!user.isProvisioned) {
+  if (!user.isProvisioned && user.source !== "demo") {
     return null;
   }
 
-  return findTenantContextForUser(user);
+  try {
+    return await resolveActiveTenantForUser({
+      id: user.id,
+      email: user.email,
+      isDemoMode: user.source === "demo" && isDevelopmentAuthEnabled(),
+    });
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function requireTenantContext(): Promise<TenantContext> {
@@ -196,7 +206,7 @@ export async function requireSession(): Promise<AuthSession> {
     email: user.email,
     user,
     activeTenant,
-    isDemoMode: isDevelopmentAuthEnabled(),
+    isDemoMode: user.source === "demo" && isDevelopmentAuthEnabled(),
   };
 }
 
@@ -235,23 +245,9 @@ type ProvisionedUserRecord = {
   name?: string | null;
 };
 
-type MembershipRecord = {
-  id: string;
-  tenantId: string;
-  userId: string;
-  role: TenantContext["role"];
-  tenant: {
-    id: string;
-    name: string;
-  };
-};
-
 type AuthDatabase = {
   user: {
     findUnique(args: Record<string, unknown>): Promise<ProvisionedUserRecord | null>;
-  };
-  membership: {
-    findFirst(args: Record<string, unknown>): Promise<MembershipRecord | null>;
   };
 };
 
@@ -281,34 +277,6 @@ async function findProvisionedUserByEmail(email: string): Promise<AuthUser | nul
           name: user.name ?? undefined,
           isProvisioned: true,
           source: "provider",
-        }
-      : null;
-  } catch (error) {
-    if (error instanceof DatabaseUnavailableError) {
-      return null;
-    }
-
-    throw error;
-  }
-}
-
-async function findTenantContextForUser(user: AuthUser): Promise<TenantContext | null> {
-  try {
-    const db = getPrismaClient() as unknown as AuthDatabase;
-    const membership = await db.membership.findFirst({
-      where: { userId: user.id },
-      include: { tenant: true },
-      orderBy: { createdAt: "asc" },
-    });
-
-    return membership
-      ? {
-          tenantId: membership.tenantId,
-          tenantName: membership.tenant.name,
-          userId: membership.userId,
-          userEmail: user.email,
-          membershipId: membership.id,
-          role: membership.role,
         }
       : null;
   } catch (error) {

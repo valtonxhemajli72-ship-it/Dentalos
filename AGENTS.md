@@ -40,6 +40,9 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - NextAuth/Auth.js-compatible authentication is wired through `src/server/auth`; do not bypass it in product modules.
 - Development demo auth is allowed only outside production, must be explicitly enabled with `DEMO_AUTH_ENABLED="true"`, and must remain deterministic.
 - OAuth sign-in identifies a user; tenant access still requires a matching `User` and `Membership`.
+- Active tenant selection must be revalidated against memberships on every request.
+- Staff invitations must store only `tokenHash`; never log or persist raw invitation tokens.
+- Do not allow role changes or membership deactivation that would remove the last active `OWNER`.
 - Server actions that write tenant-owned data must call `requirePermission()` before parsing or persisting input.
 - Background jobs and event handlers must carry tenant context explicitly.
 - Cross-tenant admin workflows need explicit authorization and audit logs.
@@ -47,6 +50,8 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 Tenant-owned models include `Patient`, `Appointment`, `RecallCampaign`, `NotificationMessage`, `PatientImportBatch`, and `AuditLog`. Repository functions must be named and shaped so tenant scope is obvious, for example `getPatientForTenant(tenantId, patientId)`. Do not add `getPatient(id)` style shortcuts.
 
 RBAC roles are `OWNER`, `ADMIN`, `DOCTOR`, `RECEPTIONIST`, `MANAGER`, and `STAFF`. `CLINICIAN` may exist only as a legacy compatibility alias. Permissions live in `src/server/auth/permissions.ts`; do not scatter role checks across product modules.
+
+Team management lives under `/dashboard/settings/team`. Owner/Admin users may manage invitations and most roles; Admin users must not modify Owner memberships or assign Owner. Managers may read team settings but should not manage roles by default.
 
 Tenant isolation roadmap:
 
@@ -143,7 +148,7 @@ Review every change with these questions:
 
 ## Intentionally Not Implemented Yet
 
-- Tenant switching UI, invitation flow, staff management UI, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
+- Invitation acceptance route, staff invitation email delivery, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

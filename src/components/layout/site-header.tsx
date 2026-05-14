@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { TenantSwitcher } from "@/components/layout/tenant-switcher";
 import { APP_NAME } from "@/lib/constants";
 import type { TenantContext } from "@/modules/tenants";
 
@@ -9,6 +10,7 @@ const navItems = [
   { href: "/dashboard/patients", label: "Patients" },
   { href: "/dashboard/import", label: "Import" },
   { href: "/dashboard/recall", label: "Recall" },
+  { href: "/dashboard/settings/team", label: "Team" },
   { href: "/dashboard/onboarding", label: "Onboarding" },
 ];
 
@@ -25,19 +27,7 @@ export function SiteHeader({ tenant, isDemoMode = false }: SiteHeaderProps) {
           {APP_NAME}
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          {tenant ? (
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted">
-              <span className="rounded bg-surface px-2.5 py-1">
-                {tenant.tenantName ?? "Selected clinic"}
-              </span>
-              <span className="rounded bg-surface px-2.5 py-1">{formatRole(tenant.role)}</span>
-              {isDemoMode ? (
-                <span className="rounded bg-brand-50 px-2.5 py-1 text-brand-700">
-                  Development demo mode
-                </span>
-              ) : null}
-            </div>
-          ) : null}
+          {tenant ? <TenantSwitcher tenant={tenant} isDemoMode={isDemoMode} /> : null}
           <nav aria-label="Primary navigation" className="flex flex-wrap items-center gap-1">
             {navItems.map((item) => (
               <Link
@@ -62,16 +52,4 @@ export function SiteHeader({ tenant, isDemoMode = false }: SiteHeaderProps) {
       </div>
     </header>
   );
-}
-
-function formatRole(role: TenantContext["role"]): string {
-  if (role === "CLINICIAN") {
-    return "Doctor";
-  }
-
-  return role
-    .toLowerCase()
-    .split("_")
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
 }

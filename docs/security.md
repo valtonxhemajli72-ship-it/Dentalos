@@ -38,12 +38,15 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Production ignores demo auth and fails closed when no real provider/session exists.
 - Users access tenant data through memberships.
 - OAuth sessions map by email to an existing `User`; tenant access requires a matching `Membership`.
+- Active tenant selection is stored as a cookie but revalidated against membership records on every request.
 - Supported roles are owner, admin, doctor, receptionist, manager, and staff. `CLINICIAN` remains only as a legacy compatibility alias.
 - Check permissions before sensitive reads, imports, exports, message sends, campaign preparation, settings changes, audit reads, user management, or billing reads.
 - Patient import persistence requires `patient:import`.
 - Patient lists require `patient:read`.
 - Recall review requires `recall:read`; campaign preparation requires `campaign:prepare`.
 - Session and tenant switching should be auditable when implemented.
+- Staff invitations store token hashes only. Raw invitation tokens must never be logged, audited, or persisted.
+- Role changes and deactivation must preserve at least one active owner for every tenant.
 
 ## Audit Log Strategy
 
@@ -102,7 +105,7 @@ DentalOS should not make diagnosis, treatment, or clinical necessity claims. Pro
 
 ## Intentionally Not Implemented Yet
 
-- Tenant switching UI, invitation flow, staff management UI, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
+- Invitation acceptance route, staff invitation email delivery, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
 - Real SMS, email, WhatsApp, or phone integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

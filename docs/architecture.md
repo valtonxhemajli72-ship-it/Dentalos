@@ -34,6 +34,8 @@ NextAuth provides the first real authentication provider boundary through Google
 
 RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages require `patient:read`, patient import pages and actions require `patient:import`, recall pages require `recall:read`, and campaign preparation placeholders check `campaign:prepare`.
 
+Tenant switching stores the selected tenant ID in an HTTP-only cookie. The selected value is never trusted by itself; `resolveActiveTenantForUser` revalidates it against the authenticated user’s active memberships and falls back to the first valid membership when needed. Team management and staff invitations live in the tenants module. Invitation records store `tokenHash` only and do not send email yet.
+
 ## Event Examples
 
 - `patient.created`
