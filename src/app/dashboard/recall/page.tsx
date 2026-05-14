@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { PrivateRouteState } from "@/components/layout/private-route-state";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -18,10 +19,12 @@ import {
   type RecallQueueItem,
   type RecallStatus,
 } from "@/modules/patients/recall";
-import { demoTenantContext, requireSession } from "@/server/auth";
+import { isAuthBoundaryError, isDevelopmentAuthEnabled, requirePermission } from "@/server/auth";
+import { roleHasPermission } from "@/server/auth/permissions";
 import { createRecallCandidatesViewedAuditEvent, writeAuditEvent } from "@/server/audit";
 import { getPrismaClient } from "@/server/db";
 import type { PatientImportRepositoryDatabase } from "@/modules/patient-import/repository";
+import type { TenantContext } from "@/modules/tenants";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +60,19 @@ const actionLabels: Record<RecallAction, string> = {
 };
 
 export default async function RecallDashboardPage() {
-  const data = await getRecallPageData();
+  let tenant: TenantContext;
+
+  try {
+    tenant = await requirePermission("recall:read");
+  } catch (error) {
+    if (isAuthBoundaryError(error)) {
+      return <PrivateRouteState error={error} />;
+    }
+
+    throw error;
+  }
+
+  const data = await getRecallPageData(tenant);
   const snapshot = buildRecallWorkspaceSnapshot(data.candidates, data.asOf);
   const actionablePatients = snapshot.queue.filter((item) =>
     ["call_to_schedule", "send_recall_message", "send_gentle_nudge"].includes(
@@ -65,9 +80,10 @@ export default async function RecallDashboardPage() {
     ),
   );
   const hasPatients = snapshot.summary.totalPatients > 0;
+  const canPrepareCampaign = roleHasPermission(tenant.role, "campaign:prepare");
 
   return (
-    <DashboardShell>
+    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -202,7 +218,7 @@ export default async function RecallDashboardPage() {
                 disabled
                 className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white opacity-60"
               >
-                Prepare campaign draft
+                {canPrepareCampaign ? "Prepare campaign draft" : "Campaign permission required"}
               </button>
               <Link
                 href="/dashboard/import"
@@ -251,9 +267,7 @@ type RecallPageData = {
   };
 };
 
-async function getRecallPageData(): Promise<RecallPageData> {
-  const session = await requireSession();
-  const tenant = session.activeTenant ?? demoTenantContext;
+async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData> {
   const asOf = new Date();
 
   try {

@@ -1,6 +1,8 @@
 type OptionalEnvName =
   | "DATABASE_URL"
   | "AUTH_SECRET"
+  | "NEXTAUTH_URL"
+  | "NEXTAUTH_SECRET"
   | "OPENAI_API_KEY"
   | "RESEND_API_KEY"
   | "TWILIO_ACCOUNT_SID"
@@ -10,6 +12,8 @@ export const env = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   databaseUrl: process.env.DATABASE_URL,
   authSecret: process.env.AUTH_SECRET,
+  nextAuthUrl: process.env.NEXTAUTH_URL,
+  nextAuthSecret: process.env.NEXTAUTH_SECRET,
   openAiApiKey: process.env.OPENAI_API_KEY,
   resendApiKey: process.env.RESEND_API_KEY,
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,

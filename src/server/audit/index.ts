@@ -6,6 +6,12 @@ import {
 import { requireTenantId, type TenantContext } from "@/modules/tenants";
 
 export type AuditAction =
+  | "auth.login.succeeded"
+  | "auth.login.failed"
+  | "auth.logout"
+  | "rbac.permission_denied"
+  | "tenant.context.resolved"
+  | "tenant.context_failed"
   | "patient_import.previewed"
   | "patient_import.validated"
   | "patient_import.imported"
@@ -88,6 +94,76 @@ export function createPatientImportPreviewedAuditEvent(
     tenant,
     action: "patient_import.previewed",
     entityType: "PatientImportBatch",
+    metadata,
+  });
+}
+
+export function createAuthLoginSucceededAuditEvent(
+  tenant: TenantContext,
+  metadata: { mode: "demo" | "provider" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "auth.login.succeeded",
+    entityType: "User",
+    entityId: tenant.userId,
+    metadata,
+  });
+}
+
+export function createAuthLoginFailedAuditEvent(
+  tenant: TenantContext,
+  metadata: { reason: "missing_session" | "provider_error" | "tenant_missing" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "auth.login.failed",
+    entityType: "User",
+    metadata,
+  });
+}
+
+export function createAuthLogoutAuditEvent(tenant: TenantContext): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "auth.logout",
+    entityType: "User",
+    entityId: tenant.userId,
+  });
+}
+
+export function createPermissionDeniedAuditEvent(
+  tenant: TenantContext,
+  metadata: { permission: string; role: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "rbac.permission_denied",
+    entityType: "Membership",
+    entityId: tenant.membershipId,
+    metadata,
+  });
+}
+
+export function createTenantContextResolvedAuditEvent(tenant: TenantContext): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "tenant.context.resolved",
+    entityType: "Tenant",
+    entityId: tenant.tenantId,
+    metadata: { role: tenant.role },
+  });
+}
+
+export function createTenantContextFailedAuditEvent(
+  tenant: TenantContext,
+  metadata: { reason: "missing_membership" | "missing_tenant" | "permission_denied" },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "tenant.context_failed",
+    entityType: "Tenant",
+    entityId: tenant.tenantId,
     metadata,
   });
 }

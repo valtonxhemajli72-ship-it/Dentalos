@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { PrivateRouteState } from "@/components/layout/private-route-state";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { APP_NAME } from "@/lib/constants";
-import { requireSession } from "@/server/auth";
+import { isAuthBoundaryError, isDevelopmentAuthEnabled, requireTenantContext } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -52,11 +53,22 @@ const activity = [
 ];
 
 export default async function DashboardPage() {
-  const session = await requireSession();
-  const tenantName = session.activeTenant?.tenantName ?? APP_NAME;
+  let tenant;
+
+  try {
+    tenant = await requireTenantContext();
+  } catch (error) {
+    if (isAuthBoundaryError(error)) {
+      return <PrivateRouteState error={error} />;
+    }
+
+    throw error;
+  }
+
+  const tenantName = tenant.tenantName ?? APP_NAME;
 
   return (
-    <DashboardShell>
+    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
       <div className="flex flex-col gap-3 border-b border-line bg-white px-6 py-6 lg:px-8">
         <Badge>{tenantName}</Badge>
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
@@ -116,9 +128,9 @@ export default async function DashboardPage() {
           <h2 className="text-base font-semibold text-ink">Foundation status</h2>
           <dl className="mt-5 space-y-4">
             {[
-              ["Auth", "planned"],
+              ["Auth", "dev-only boundary"],
               ["Tenant isolation", "enforced by repositories"],
-              ["Role access", "planned"],
+              ["Role access", tenant.role],
               ["Notifications", "module boundary"],
               ["AI orchestration", "assistant layer"],
             ].map(([name, status]) => (

@@ -36,10 +36,15 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - Patient imports create `PatientImportBatch` records with counts only; never store raw CSV content.
 - Private routes must resolve authenticated user and active tenant before accessing tenant data.
 - Never trust tenant IDs from the client without checking membership and permissions.
+- Production dashboard access must fail closed until a real auth provider is configured.
+- Development demo auth is allowed only outside production and must remain deterministic.
+- Server actions that write tenant-owned data must call `requirePermission()` before parsing or persisting input.
 - Background jobs and event handlers must carry tenant context explicitly.
 - Cross-tenant admin workflows need explicit authorization and audit logs.
 
 Tenant-owned models include `Patient`, `Appointment`, `RecallCampaign`, `NotificationMessage`, `PatientImportBatch`, and `AuditLog`. Repository functions must be named and shaped so tenant scope is obvious, for example `getPatientForTenant(tenantId, patientId)`. Do not add `getPatient(id)` style shortcuts.
+
+RBAC roles are `OWNER`, `ADMIN`, `DOCTOR`, `RECEPTIONIST`, `MANAGER`, and `STAFF`. `CLINICIAN` may exist only as a legacy compatibility alias. Permissions live in `src/server/auth/permissions.ts`; do not scatter role checks across product modules.
 
 Tenant isolation roadmap:
 
@@ -99,6 +104,7 @@ Tenant isolation roadmap:
 
 - Add tests with the same vertical slice when behavior becomes non-trivial.
 - Cover tenant isolation, permission checks, validation, and failure paths.
+- Keep `npm run auth:validate` passing when role-permission mappings change.
 - Patient import tests should cover invalid dates, missing names, duplicate contacts, unsupported channels, and no PII in audit metadata.
 - Keep UI tests focused on important user workflows.
 - Run available checks before handoff: format, lint, typecheck, build, and Prisma validation when practical.
@@ -135,7 +141,7 @@ Review every change with these questions:
 
 ## Intentionally Not Implemented Yet
 
-- Real authentication provider and production RBAC.
+- Real authentication provider, login UI, tenant switching UI, and user management UI.
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

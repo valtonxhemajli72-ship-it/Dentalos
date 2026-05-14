@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { PrivateRouteState } from "@/components/layout/private-route-state";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { APP_NAME } from "@/lib/constants";
-import { requireSession } from "@/server/auth";
+import { isAuthBoundaryError, isDevelopmentAuthEnabled, requirePermission } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -43,10 +44,20 @@ const onboardingSteps = [
 ];
 
 export default async function OnboardingPage() {
-  await requireSession();
+  let tenant;
+
+  try {
+    tenant = await requirePermission("settings:read");
+  } catch (error) {
+    if (isAuthBoundaryError(error)) {
+      return <PrivateRouteState error={error} />;
+    }
+
+    throw error;
+  }
 
   return (
-    <DashboardShell>
+    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <Badge>Pilot onboarding</Badge>
         <h1 className="mt-3 text-3xl font-semibold text-ink">Clinic onboarding workflow</h1>

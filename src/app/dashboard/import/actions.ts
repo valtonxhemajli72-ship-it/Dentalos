@@ -20,7 +20,12 @@ import {
   writeAuditEvent,
   type AuditLogDatabase,
 } from "@/server/audit";
-import { isDevelopmentAuthEnabled, requireSession } from "@/server/auth";
+import {
+  describeAuthBoundaryError,
+  isAuthBoundaryError,
+  isDevelopmentAuthEnabled,
+  requirePermission,
+} from "@/server/auth";
 import { DatabaseUnavailableError, getPrismaClient } from "@/server/db";
 
 export type PatientImportPersistenceResult = {
@@ -64,14 +69,18 @@ type ImportPersistenceDatabase = ImportPersistenceTransaction & {
 export async function previewPatientImportAction(
   csvText: string,
 ): Promise<PatientImportActionResult> {
-  const session = await requireSession();
-  const tenant = requireActiveTenant(session.activeTenant);
+  const tenant = await requireImportPermissionOrReturn();
+
+  if ("ok" in tenant) {
+    return tenant;
+  }
+
   const preview = createPatientImportPreview(csvText);
   const clientPreview = createPatientImportClientPreview(csvText);
 
   try {
     const db = getPrismaClient() as unknown as ImportPersistenceDatabase;
-    await ensureDevelopmentTenantForPersistence(db, tenant, session.email);
+    await ensureDevelopmentTenantForPersistence(db, tenant);
     await writeAuditEvent(
       db,
       createPatientImportPreviewedAuditEvent(tenant, {
@@ -100,8 +109,12 @@ export async function previewPatientImportAction(
 export async function persistPatientImportAction(
   csvText: string,
 ): Promise<PatientImportActionResult> {
-  const session = await requireSession();
-  const tenant = requireActiveTenant(session.activeTenant);
+  const tenant = await requireImportPermissionOrReturn();
+
+  if ("ok" in tenant) {
+    return tenant;
+  }
+
   const preview = createPatientImportPreview(csvText);
   const clientPreview = createPatientImportClientPreview(csvText);
   const duplicateRowsInsideBatch = preview.summary.duplicateRowCount;
@@ -136,7 +149,7 @@ export async function persistPatientImportAction(
   let validRows = preview.summary.validRowCount;
 
   try {
-    await ensureDevelopmentTenantForPersistence(db, tenant, session.email);
+    await ensureDevelopmentTenantForPersistence(db, tenant);
 
     const validPreviewRows = preview.rows.filter((row) => row.issues.length === 0);
     const validNormalizedRows: PatientImportNormalizedRow[] = preview.drafts.map(
@@ -171,7 +184,7 @@ export async function persistPatientImportAction(
       const batch = await tx.patientImportBatch.create({
         data: {
           tenantId: tenant.tenantId,
-          createdByUserId: isDevelopmentAuthEnabled() ? tenant.userId : undefined,
+          createdByUserId: tenant.userId,
           status: validRowsForCreation.length > 0 ? "IMPORTED" : "VALIDATED",
           source: "pasted_csv",
           rowCount: preview.summary.rowCount,
@@ -245,18 +258,27 @@ export async function persistPatientImportAction(
   }
 }
 
-function requireActiveTenant(context: TenantContext | undefined): TenantContext {
-  if (!context) {
-    throw new Error("Tenant context is required.");
-  }
+async function requireImportPermissionOrReturn(): Promise<
+  TenantContext | PatientImportActionResult
+> {
+  try {
+    return await requirePermission("patient:import");
+  } catch (error) {
+    if (!isAuthBoundaryError(error)) {
+      throw error;
+    }
 
-  return context;
+    return {
+      ok: false,
+      message: describeAuthBoundaryError(error),
+      preview: createPatientImportClientPreview(""),
+    };
+  }
 }
 
 async function ensureDevelopmentTenantForPersistence(
   db: ImportPersistenceDatabase,
   tenant: TenantContext,
-  userEmail: string,
 ) {
   if (!isDevelopmentAuthEnabled()) {
     return;
@@ -278,12 +300,12 @@ async function ensureDevelopmentTenantForPersistence(
   await db.user.upsert({
     where: { id: tenant.userId },
     update: {
-      email: userEmail,
+      email: tenant.userEmail ?? "demo-user@example.test",
       name: "Klinika360 Demo User",
     },
     create: {
       id: tenant.userId,
-      email: userEmail,
+      email: tenant.userEmail ?? "demo-user@example.test",
       name: "Klinika360 Demo User",
     },
   });

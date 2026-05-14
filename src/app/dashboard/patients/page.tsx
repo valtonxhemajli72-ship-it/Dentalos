@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { PrivateRouteState } from "@/components/layout/private-route-state";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,7 +9,8 @@ import {
   mapRecallPatientToPatientListItem,
   type PatientListItem,
 } from "@/modules/patients/repository";
-import { demoTenantContext, requireSession } from "@/server/auth";
+import { isAuthBoundaryError, isDevelopmentAuthEnabled, requirePermission } from "@/server/auth";
+import type { TenantContext } from "@/modules/tenants";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +28,22 @@ type PatientsPageData = {
 };
 
 export default async function PatientsPage() {
-  const data = await getPatientsPageData();
+  let tenant: TenantContext;
+
+  try {
+    tenant = await requirePermission("patient:read");
+  } catch (error) {
+    if (isAuthBoundaryError(error)) {
+      return <PrivateRouteState error={error} />;
+    }
+
+    throw error;
+  }
+
+  const data = await getPatientsPageData(tenant);
 
   return (
-    <DashboardShell>
+    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -133,10 +147,7 @@ export default async function PatientsPage() {
   );
 }
 
-async function getPatientsPageData(): Promise<PatientsPageData> {
-  const session = await requireSession();
-  const tenant = session.activeTenant ?? demoTenantContext;
-
+async function getPatientsPageData(tenant: TenantContext): Promise<PatientsPageData> {
   try {
     const patients = await listPatientsForTenant(tenant.tenantId);
     return {

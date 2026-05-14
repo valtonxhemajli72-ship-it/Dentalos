@@ -39,19 +39,27 @@ export interface PolicyEngine {
 }
 
 const ownerAdminActions: PolicyAction[] = ["tenant.admin", "tenant.export", "billing.manage"];
-const clinicianActions: PolicyAction[] = [
+const doctorActions: PolicyAction[] = [
   "patient.read",
   "patient.list",
   "recall.prepare",
   "notification.prepare",
 ];
-const staffActions: PolicyAction[] = [
+const receptionistActions: PolicyAction[] = [
   "patient.read",
   "patient.list",
   "patient.import",
   "recall.prepare",
   "notification.prepare",
 ];
+const managerActions: PolicyAction[] = [
+  "patient.read",
+  "patient.list",
+  "recall.prepare",
+  "notification.prepare",
+  "tenant.admin",
+];
+const staffActions: PolicyAction[] = ["patient.read", "patient.list"];
 
 export function createLocalPolicyEngine(): PolicyEngine {
   return {
@@ -64,8 +72,19 @@ export function createLocalPolicyEngine(): PolicyEngine {
         return { allowed: true, reason: "Owner or admin role allowed by local policy." };
       }
 
-      if (context.userRole === "CLINICIAN" && clinicianActions.includes(action)) {
-        return { allowed: true, reason: "Clinician role allowed by local policy." };
+      if (
+        (context.userRole === "DOCTOR" || context.userRole === "CLINICIAN") &&
+        doctorActions.includes(action)
+      ) {
+        return { allowed: true, reason: "Doctor role allowed by local policy." };
+      }
+
+      if (context.userRole === "RECEPTIONIST" && receptionistActions.includes(action)) {
+        return { allowed: true, reason: "Receptionist role allowed by local policy." };
+      }
+
+      if (context.userRole === "MANAGER" && managerActions.includes(action)) {
+        return { allowed: true, reason: "Manager role allowed by local policy." };
       }
 
       if (context.userRole === "STAFF" && staffActions.includes(action)) {
