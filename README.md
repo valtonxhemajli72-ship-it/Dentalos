@@ -4,7 +4,7 @@ Klinika360 is a multi-tenant SaaS platform for dental clinics. DentalOS remains 
 
 The first version should help a clinic consistently bring patients back into care without adding more manual work to the front desk.
 
-Klinika360 is designed for doctors, receptionists, clinic managers, administrative staff, and other clinic team members. Private dashboard flows use NextAuth/Auth.js-compatible authentication, tenant membership resolution, and RBAC checks. The deterministic demo identity is disabled by default, local-development only, and ignored in production.
+Klinika360 is designed for doctors, receptionists, clinic managers, administrative staff, and other clinic team members. Private dashboard flows use NextAuth/Auth.js-compatible authentication, tenant membership resolution, and RBAC checks. The deterministic demo identity is local-development only, requires explicit `DEMO_AUTH_ENABLED="true"`, and is ignored in production.
 
 ## Initial Wedge
 
@@ -58,13 +58,27 @@ Install dependencies:
 npm install
 ```
 
-Start the development server:
+Run the local PostgreSQL-backed app:
+
+```bash
+cp .env.example .env.local
+docker compose up -d
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+On Windows PowerShell, use `Copy-Item .env.example .env.local` for the copy step.
+
+Start only the development server:
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` or `http://localhost:3000/dashboard`.
+
+See `docs/local-development.md` and `docs/database-runtime.md` for reset, troubleshooting, and database safety notes.
 
 ## Environment Variables
 
@@ -99,8 +113,14 @@ Optional integration placeholders:
 - `npm run format:check` - check formatting.
 - `npm run auth:validate` - run dependency-free RBAC mapping checks.
 - `npm run invitation:validate` - run dependency-free invitation acceptance guardrail checks.
+- `npm run runtime:validate` - run dependency-free local runtime setup guardrail checks.
+- `npm run dev:db` - start the local PostgreSQL service with Docker Compose.
+- `npm run db:migrate` - apply Prisma migrations to the configured database.
+- `npm run db:generate` - generate Prisma Client.
 - `npm run db:validate` - validate the Prisma schema.
 - `npm run db:seed` - manually seed fake demo data after a database and schema are available.
+- `npm run db:studio` - open Prisma Studio.
+- `npm run db:reset` - reset the configured database; use only for local development.
 
 ## Architecture Overview
 
@@ -122,6 +142,8 @@ See:
 
 - `docs/architecture.md`
 - `docs/auth.md`
+- `docs/local-development.md`
+- `docs/database-runtime.md`
 - `docs/patient-import.md`
 - `docs/product-strategy.md`
 - `docs/recall-mvp.md`

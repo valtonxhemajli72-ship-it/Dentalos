@@ -66,13 +66,24 @@ Team management starts at `/dashboard/settings/team`.
 
 ## Development Demo Auth
 
-Demo auth is disabled by default. To use the deterministic local Klinika360 demo tenant:
+Demo auth is disabled unless it is explicitly enabled in the environment. `.env.example` sets it to true for the local database bootstrap flow. To use the deterministic local Klinika360 demo tenant:
 
 ```bash
 DEMO_AUTH_ENABLED="true"
 ```
 
 Demo auth only works when `NODE_ENV` is not `production`. Production ignores demo auth even if the flag is set.
+
+The local seed script creates the same user and memberships used by demo auth:
+
+- User ID: `user_demo_klinika360_owner`.
+- Email: `demo-user@example.test`.
+- Primary tenant: `tenant_demo_klinika360`.
+- Primary membership: `membership_demo_klinika360_owner` with `OWNER`.
+- Secondary tenant: `tenant_demo_klinika360_specialists`.
+- Secondary membership: `membership_demo_klinika360_specialists_manager` with `MANAGER`.
+
+For local Google OAuth testing, configure real local development values for `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`, `AUTH_URL`, and `NEXTAUTH_URL`. OAuth identifies a user by provider email, but tenant access still requires a matching `User` row and active `Membership`; automatic provisioning is not implemented yet.
 
 ## RBAC Enforcement
 
