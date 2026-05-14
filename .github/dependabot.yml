@@ -7,22 +7,36 @@ updates:
       day: monday
       time: "07:00"
       timezone: Europe/Warsaw
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 4
     groups:
       nextjs:
         patterns:
           - next
           - eslint-config-next
+        update-types:
+          - minor
+          - patch
       prisma:
         patterns:
           - prisma
           - "@prisma/client"
+        update-types:
+          - minor
+          - patch
       react:
         patterns:
           - react
           - react-dom
           - "@types/react"
           - "@types/react-dom"
+        update-types:
+          - minor
+          - patch
+      dev-tooling:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
@@ -32,3 +46,7 @@ updates:
       time: "07:30"
       timezone: Europe/Warsaw
     open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns:
+          - "*"

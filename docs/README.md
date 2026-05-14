@@ -9,6 +9,7 @@ DentalOS is the internal repository codename. Klinika360 is the public product a
 - [Enterprise readiness](enterprise-readiness.md)
 - [Platform roadmap](platform-roadmap.md)
 - [Architecture decision records](architecture-decisions/)
+- [Dependency maintenance](dependency-maintenance.md)
 - [Security baseline](security.md)
 - [Security checklist](security-checklist.md)
 - [Accessibility](accessibility.md)
