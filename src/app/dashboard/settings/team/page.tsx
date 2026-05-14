@@ -176,8 +176,8 @@ export default async function TeamSettingsPage() {
             <div className="border-b border-line px-5 py-4">
               <h2 className="text-base font-semibold text-ink">Pending invitations</h2>
               <p className="mt-1 text-sm text-muted">
-                No email is sent yet. Future delivery should use the stored invitation record and
-                never log raw tokens.
+                Email delivery is not implemented yet. Acceptance links are prepared for future
+                delivery, and this UI does not expose raw invitation tokens.
               </p>
             </div>
             <div className="divide-y divide-line">

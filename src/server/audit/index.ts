@@ -22,8 +22,14 @@ export type AuditAction =
   | "tenant.switch_failed"
   | "invitation.created"
   | "invitation.revoked"
+  | "invitation.accept_attempted"
   | "invitation.accepted"
+  | "invitation.accept_failed"
+  | "invitation.accept_expired"
+  | "invitation.accept_revoked"
+  | "invitation.accept_email_mismatch"
   | "invitation.expired"
+  | "membership.created_from_invitation"
   | "membership.role_updated"
   | "membership.deactivated"
   | "membership.last_owner_protection_triggered"
@@ -76,9 +82,31 @@ export function createAuditEvent(input: {
   entityId?: string;
   metadata?: AuditMetadata;
 }): AuditEvent {
-  return {
+  return createAuditEventForTenant({
     tenantId: requireTenantId(input.tenant),
     actorUserId: input.tenant.userId,
+    action: input.action,
+    entityType: input.entityType,
+    entityId: input.entityId,
+    metadata: input.metadata,
+  });
+}
+
+export function createAuditEventForTenant(input: {
+  tenantId: string;
+  actorUserId?: string;
+  action: AuditAction;
+  entityType: string;
+  entityId?: string;
+  metadata?: AuditMetadata;
+}): AuditEvent {
+  if (!input.tenantId) {
+    throw new Error("Audit events require tenantId.");
+  }
+
+  return {
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
     action: input.action,
     entityType: input.entityType,
     entityId: input.entityId,
@@ -245,17 +273,120 @@ export function createInvitationRevokedAuditEvent(
   });
 }
 
+export function createInvitationAcceptAttemptedAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  invitationId: string;
+  metadata: { status: string; role?: string };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "invitation.accept_attempted",
+    entityType: "TenantInvitation",
+    entityId: input.invitationId,
+    metadata: input.metadata,
+  });
+}
+
 export function createInvitationAcceptedAuditEvent(
-  tenant: TenantContext,
-  invitationId: string,
-  metadata: { role: string; status: string },
+  tenantOrInput:
+    | TenantContext
+    | {
+        tenantId: string;
+        actorUserId?: string;
+        invitationId: string;
+        metadata: {
+          role: string;
+          status: string;
+          membershipCreated?: boolean;
+          membershipReactivated?: boolean;
+        };
+      },
+  invitationId?: string,
+  metadata?: { role: string; status: string },
 ): AuditEvent {
+  if ("invitationId" in tenantOrInput) {
+    return createAuditEventForTenant({
+      tenantId: tenantOrInput.tenantId,
+      actorUserId: tenantOrInput.actorUserId,
+      action: "invitation.accepted",
+      entityType: "TenantInvitation",
+      entityId: tenantOrInput.invitationId,
+      metadata: tenantOrInput.metadata,
+    });
+  }
+
   return createAuditEvent({
-    tenant,
+    tenant: tenantOrInput,
     action: "invitation.accepted",
     entityType: "TenantInvitation",
     entityId: invitationId,
     metadata,
+  });
+}
+
+export function createInvitationAcceptFailedAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  invitationId: string;
+  metadata: { reason: string; status: string; role?: string };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "invitation.accept_failed",
+    entityType: "TenantInvitation",
+    entityId: input.invitationId,
+    metadata: input.metadata,
+  });
+}
+
+export function createInvitationAcceptExpiredAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  invitationId: string;
+  metadata: { status: string };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "invitation.accept_expired",
+    entityType: "TenantInvitation",
+    entityId: input.invitationId,
+    metadata: input.metadata,
+  });
+}
+
+export function createInvitationAcceptRevokedAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  invitationId: string;
+  metadata: { status: string };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "invitation.accept_revoked",
+    entityType: "TenantInvitation",
+    entityId: input.invitationId,
+    metadata: input.metadata,
+  });
+}
+
+export function createInvitationAcceptEmailMismatchAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  invitationId: string;
+  metadata: { status: string };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "invitation.accept_email_mismatch",
+    entityType: "TenantInvitation",
+    entityId: input.invitationId,
+    metadata: input.metadata,
   });
 }
 
@@ -268,6 +399,26 @@ export function createInvitationExpiredAuditEvent(
     action: "invitation.expired",
     entityType: "TenantInvitation",
     metadata,
+  });
+}
+
+export function createMembershipCreatedFromInvitationAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  membershipId: string;
+  invitationId: string;
+  metadata: { role: string; reactivated?: boolean };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "membership.created_from_invitation",
+    entityType: "Membership",
+    entityId: input.membershipId,
+    metadata: {
+      ...input.metadata,
+      invitationId: input.invitationId,
+    },
   });
 }
 

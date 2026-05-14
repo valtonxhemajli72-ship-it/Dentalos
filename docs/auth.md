@@ -53,6 +53,14 @@ Team management starts at `/dashboard/settings/team`.
 - Managers can read team settings but cannot manage roles by default.
 - Invitation records store `tokenHash` only.
 - No invitation email is sent yet.
+- Invitation acceptance is available at `/invitations/accept?token=...` for links delivered out of band or by a future email adapter.
+- The accepting user must authenticate first.
+- The server hashes the submitted token and compares it to the stored `tokenHash`; token hashes are never exposed to the client.
+- Invitation creation may produce a one-time delivery token in server memory for a future email adapter, but the team UI does not display it and the database stores only `tokenHash`.
+- The invitation tenant and role come from the invitation record, never from client-submitted fields.
+- The authenticated email must match the invited email. If it does not, the UI shows: “This invitation was issued for a different email address.”
+- Expired, revoked, already accepted, invalid, and Owner-role invitations fail closed.
+- Acceptance creates the `User` row when needed, creates or reactivates a membership for the invitation tenant, and closes the invitation.
 - Admin users cannot assign or modify Owner memberships.
 - Role changes and deactivation must preserve at least one active Owner.
 
@@ -81,7 +89,6 @@ Server actions that write tenant-owned data must call `requirePermission()` befo
 
 ## Intentionally Not Implemented Yet
 
-- Invitation acceptance route.
 - Staff invitation email delivery.
 - Password authentication.
 - Password reset.

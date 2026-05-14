@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "auth:validate": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-auth-rbac.mjs",
+    "invitation:validate": "node scripts/validate-invitation-acceptance.mjs",
     "db:validate": "node scripts/validate-prisma.mjs",
     "db:seed": "node scripts/seed-demo-data.mjs"
   },

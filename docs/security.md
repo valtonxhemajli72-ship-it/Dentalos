@@ -46,6 +46,9 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Recall review requires `recall:read`; campaign preparation requires `campaign:prepare`.
 - Session and tenant switching should be auditable when implemented.
 - Staff invitations store token hashes only. Raw invitation tokens must never be logged, audited, or persisted.
+- Invitation acceptance hashes raw tokens server-side, uses timing-safe token verification, never exposes token hashes to the client, and never trusts tenant IDs or roles from the client.
+- Invitation acceptance requires an authenticated user whose email matches the invited email. Mismatch, expired, revoked, already accepted, invalid, and Owner-role invitations fail safely.
+- Invitation acceptance audit metadata must contain statuses, roles, IDs, booleans, or reasons only; it must not contain raw tokens, token hashes, raw email addresses, sessions, or provider payloads.
 - Role changes and deactivation must preserve at least one active owner for every tenant.
 
 ## Audit Log Strategy
@@ -105,7 +108,7 @@ DentalOS should not make diagnosis, treatment, or clinical necessity claims. Pro
 
 ## Intentionally Not Implemented Yet
 
-- Invitation acceptance route, staff invitation email delivery, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
+- Staff invitation email delivery, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
 - Real SMS, email, WhatsApp, or phone integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.
