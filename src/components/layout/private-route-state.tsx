@@ -15,15 +15,15 @@ export function PrivateRouteState({ error }: PrivateRouteStateProps) {
         <h1 className="mt-4 text-3xl font-semibold text-ink">Access requires authorization</h1>
         <p className="mt-3 text-sm leading-6 text-muted">{describeAuthBoundaryError(error)}</p>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Demo access is available only in local development. Production dashboard routes fail
-          closed until a real authentication provider and tenant membership resolution are
-          configured.
+          Demo access is available only in local development when explicitly enabled. Production
+          dashboard routes fail closed unless a real provider session and tenant membership are
+          resolved.
         </p>
         <Link
-          href="/"
+          href="/sign-in"
           className="mt-6 inline-flex min-h-10 w-fit items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
         >
-          Back to product overview
+          Go to sign in
         </Link>
       </section>
     </DashboardShell>

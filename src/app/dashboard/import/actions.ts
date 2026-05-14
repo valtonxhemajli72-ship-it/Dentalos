@@ -23,6 +23,7 @@ import {
 import {
   describeAuthBoundaryError,
   isAuthBoundaryError,
+  isDemoTenantContext,
   isDevelopmentAuthEnabled,
   requirePermission,
 } from "@/server/auth";
@@ -280,7 +281,7 @@ async function ensureDevelopmentTenantForPersistence(
   db: ImportPersistenceDatabase,
   tenant: TenantContext,
 ) {
-  if (!isDevelopmentAuthEnabled()) {
+  if (!isDevelopmentAuthEnabled() || !isDemoTenantContext(tenant)) {
     return;
   }
 

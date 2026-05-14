@@ -33,9 +33,11 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 ## Auth and RBAC Baseline
 
 - Private routes require authentication and tenant context through `src/server/auth`.
-- Development demo auth is deterministic and only active outside production.
-- Production fails closed because no real provider is wired yet; do not add production auth bypasses.
+- NextAuth is wired with Google OAuth as the first real provider path when provider credentials are configured.
+- Development demo auth is deterministic, disabled by default, and only active outside production when `DEMO_AUTH_ENABLED="true"`.
+- Production ignores demo auth and fails closed when no real provider/session exists.
 - Users access tenant data through memberships.
+- OAuth sessions map by email to an existing `User`; tenant access requires a matching `Membership`.
 - Supported roles are owner, admin, doctor, receptionist, manager, and staff. `CLINICIAN` remains only as a legacy compatibility alias.
 - Check permissions before sensitive reads, imports, exports, message sends, campaign preparation, settings changes, audit reads, user management, or billing reads.
 - Patient import persistence requires `patient:import`.
@@ -100,7 +102,7 @@ DentalOS should not make diagnosis, treatment, or clinical necessity claims. Pro
 
 ## Intentionally Not Implemented Yet
 
-- Real authentication provider, login UI, tenant switching UI, and user management UI.
+- Tenant switching UI, invitation flow, staff management UI, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
 - Real SMS, email, WhatsApp, or phone integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

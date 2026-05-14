@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { APP_NAME } from "@/lib/constants";
 import type { TenantContext } from "@/modules/tenants";
 
@@ -31,7 +32,9 @@ export function SiteHeader({ tenant, isDemoMode = false }: SiteHeaderProps) {
               </span>
               <span className="rounded bg-surface px-2.5 py-1">{formatRole(tenant.role)}</span>
               {isDemoMode ? (
-                <span className="rounded bg-brand-50 px-2.5 py-1 text-brand-700">Demo mode</span>
+                <span className="rounded bg-brand-50 px-2.5 py-1 text-brand-700">
+                  Development demo mode
+                </span>
               ) : null}
             </div>
           ) : null}
@@ -46,6 +49,15 @@ export function SiteHeader({ tenant, isDemoMode = false }: SiteHeaderProps) {
               </Link>
             ))}
           </nav>
+          {tenant && !isDemoMode ? <SignOutButton /> : null}
+          {!tenant ? (
+            <Link
+              href="/sign-in"
+              className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
+            >
+              Sign in
+            </Link>
+          ) : null}
         </div>
       </div>
     </header>

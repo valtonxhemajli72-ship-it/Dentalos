@@ -30,7 +30,7 @@ Request -> Auth -> Tenant resolution -> Permission check -> Validation -> Domain
 
 Each step should be explicit in code once that layer exists. Missing context should fail closed.
 
-Development auth provides a deterministic local Klinika360 tenant only outside production. Production fails closed because no real provider is wired yet. The auth boundary exposes `getCurrentUser`, `requireCurrentUser`, `getCurrentTenantContext`, `requireTenantContext`, `requireMembership`, `requireRole`, and `requirePermission`; product routes and server actions should use those helpers instead of reading sessions directly.
+NextAuth provides the first real authentication provider boundary through Google OAuth. OAuth sessions map by email to an existing `User`, then resolve `Membership` and `Tenant` before private routes can access tenant data. Development auth provides a deterministic local Klinika360 tenant only outside production and only when `DEMO_AUTH_ENABLED="true"`. Production ignores demo auth and fails closed when provider configuration, session, user, or membership context is missing. The auth boundary exposes `getCurrentUser`, `requireCurrentUser`, `getCurrentTenantContext`, `requireTenantContext`, `requireMembership`, `requireRole`, and `requirePermission`; product routes and server actions should use those helpers instead of reading sessions directly.
 
 RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages require `patient:read`, patient import pages and actions require `patient:import`, recall pages require `recall:read`, and campaign preparation placeholders check `campaign:prepare`.
 

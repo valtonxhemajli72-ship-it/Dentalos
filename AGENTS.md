@@ -37,7 +37,9 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - Private routes must resolve authenticated user and active tenant before accessing tenant data.
 - Never trust tenant IDs from the client without checking membership and permissions.
 - Production dashboard access must fail closed until a real auth provider is configured.
-- Development demo auth is allowed only outside production and must remain deterministic.
+- NextAuth/Auth.js-compatible authentication is wired through `src/server/auth`; do not bypass it in product modules.
+- Development demo auth is allowed only outside production, must be explicitly enabled with `DEMO_AUTH_ENABLED="true"`, and must remain deterministic.
+- OAuth sign-in identifies a user; tenant access still requires a matching `User` and `Membership`.
 - Server actions that write tenant-owned data must call `requirePermission()` before parsing or persisting input.
 - Background jobs and event handlers must carry tenant context explicitly.
 - Cross-tenant admin workflows need explicit authorization and audit logs.
@@ -141,7 +143,7 @@ Review every change with these questions:
 
 ## Intentionally Not Implemented Yet
 
-- Real authentication provider, login UI, tenant switching UI, and user management UI.
+- Tenant switching UI, invitation flow, staff management UI, password auth, SSO/SAML, and Auth.js Prisma adapter persistence.
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.
