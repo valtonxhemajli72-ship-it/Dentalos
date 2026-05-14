@@ -20,7 +20,7 @@ Enterprise readiness means the product is secure, accessible, fast, reviewable, 
 - Clinic managers monitor no-shows, recall readiness, import status, and clinic activity.
 - Administrative staff work from role-appropriate operational lists.
 
-The RBAC permission map exists in code and private dashboard flows use it before tenant data access. NextAuth with Google OAuth is wired as the first real provider path, while tenant switching UI and user management UI are still deferred. Production auth fails safely when provider credentials or tenant memberships are missing.
+The RBAC permission map exists in code and private dashboard flows use it before tenant data access. NextAuth with Google OAuth is wired as the first real provider path. Tenant switching and staff invitation records are now available as a foundation, while invitation acceptance and email delivery are still deferred. Production auth fails safely when provider credentials or tenant memberships are missing.
 
 ## Tenant Isolation Checklist
 
@@ -43,8 +43,9 @@ The RBAC permission map exists in code and private dashboard flows use it before
 ## Production Hardening Checklist
 
 - Configure production Google OAuth credentials and a strong auth secret behind `src/server/auth`.
-- Add tenant switching and user management for invited clinic staff.
+- Add invitation acceptance and email delivery for invited clinic staff.
 - Keep route-level permission checks for doctors, receptionists, managers, and staff.
+- Preserve last-owner protection for every role management workflow.
 - Enable branch protection with required CI, CodeQL, Semgrep, secret scanning, and review.
 - Configure production secrets through the deployment platform, not Git.
 - Review security headers and move CSP from report-only to enforced mode after validation.

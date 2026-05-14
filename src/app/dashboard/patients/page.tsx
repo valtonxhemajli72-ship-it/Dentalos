@@ -9,7 +9,12 @@ import {
   mapRecallPatientToPatientListItem,
   type PatientListItem,
 } from "@/modules/patients/repository";
-import { isAuthBoundaryError, isDevelopmentAuthEnabled, requirePermission } from "@/server/auth";
+import {
+  isAuthBoundaryError,
+  isDemoTenantContext,
+  isDevelopmentAuthEnabled,
+  requirePermission,
+} from "@/server/auth";
 import type { TenantContext } from "@/modules/tenants";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +48,10 @@ export default async function PatientsPage() {
   const data = await getPatientsPageData(tenant);
 
   return (
-    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
+    <DashboardShell
+      tenant={tenant}
+      isDemoMode={isDevelopmentAuthEnabled() && isDemoTenantContext(tenant)}
+    >
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>

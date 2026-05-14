@@ -15,6 +15,7 @@ This roadmap preserves enterprise architecture decisions without installing heav
 - Patient import, patient list, and recall review use tenant-scoped persistence when a database is configured.
 - Local/demo mode can fall back safely when database access is unavailable.
 - A NextAuth/Auth.js-compatible auth and RBAC boundary exists with Google OAuth as the first real provider path.
+- Tenant switching and staff invitation records exist without email delivery.
 - Delivery integrations, payments, AI calls, and advanced workflow infrastructure are intentionally not implemented yet.
 
 ## Enterprise Architecture Target
@@ -44,7 +45,7 @@ These are planned capabilities, not active dependencies or deployed services.
 
 ## What We Implement Later
 
-- Tenant switching, invitation flow, staff management, and more enterprise auth options on top of the current auth/RBAC boundary.
+- Invitation acceptance, email delivery, staff provisioning, and more enterprise auth options on top of the current auth/RBAC boundary.
 - PostgreSQL Row-Level Security for shared-schema tenant isolation.
 - Durable workflow engine once recall campaigns and onboarding/offboarding workflows become long-running.
 - CDC and analytical warehouse once operational reporting exceeds transactional database needs.
@@ -87,7 +88,7 @@ Do not use CDC or analytics pipelines for raw patient PII unless a reviewed priv
 ## Security And Policy Roadmap
 
 - Now: tenant helper functions, NextAuth-backed auth/RBAC boundary, audit metadata checks, security review docs, and local policy interface.
-- Next: tenant switching, user management, invitation flow, and PostgreSQL RLS.
+- Next: invitation acceptance, staff provisioning, notification-backed invitation delivery, and PostgreSQL RLS.
 - Later: OPA policy-as-code for complex enterprise policies.
 - Later: Falco for Kubernetes/container runtime security.
 - Later: cert-manager and External Secrets Operator for Kubernetes TLS and secret delivery.

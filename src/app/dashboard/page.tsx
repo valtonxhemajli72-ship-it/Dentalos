@@ -4,7 +4,12 @@ import { PrivateRouteState } from "@/components/layout/private-route-state";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { APP_NAME } from "@/lib/constants";
-import { isAuthBoundaryError, isDevelopmentAuthEnabled, requireTenantContext } from "@/server/auth";
+import {
+  isAuthBoundaryError,
+  isDemoTenantContext,
+  isDevelopmentAuthEnabled,
+  requireTenantContext,
+} from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -66,10 +71,11 @@ export default async function DashboardPage() {
   }
 
   const tenantName = tenant.tenantName ?? APP_NAME;
-  const authStatus = isDevelopmentAuthEnabled() ? "demo mode" : "provider session";
+  const isDemoMode = isDevelopmentAuthEnabled() && isDemoTenantContext(tenant);
+  const authStatus = isDemoMode ? "demo mode" : "provider session";
 
   return (
-    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
+    <DashboardShell tenant={tenant} isDemoMode={isDemoMode}>
       <div className="flex flex-col gap-3 border-b border-line bg-white px-6 py-6 lg:px-8">
         <Badge>{tenantName}</Badge>
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">

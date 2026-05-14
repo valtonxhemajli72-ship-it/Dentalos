@@ -19,7 +19,12 @@ import {
   type RecallQueueItem,
   type RecallStatus,
 } from "@/modules/patients/recall";
-import { isAuthBoundaryError, isDevelopmentAuthEnabled, requirePermission } from "@/server/auth";
+import {
+  isAuthBoundaryError,
+  isDemoTenantContext,
+  isDevelopmentAuthEnabled,
+  requirePermission,
+} from "@/server/auth";
 import { roleHasPermission } from "@/server/auth/permissions";
 import { createRecallCandidatesViewedAuditEvent, writeAuditEvent } from "@/server/audit";
 import { getPrismaClient } from "@/server/db";
@@ -83,7 +88,10 @@ export default async function RecallDashboardPage() {
   const canPrepareCampaign = roleHasPermission(tenant.role, "campaign:prepare");
 
   return (
-    <DashboardShell tenant={tenant} isDemoMode={isDevelopmentAuthEnabled()}>
+    <DashboardShell
+      tenant={tenant}
+      isDemoMode={isDevelopmentAuthEnabled() && isDemoTenantContext(tenant)}
+    >
       <div className="border-b border-line bg-white px-6 py-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
