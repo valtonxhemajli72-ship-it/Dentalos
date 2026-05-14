@@ -123,10 +123,15 @@ See:
 - `docs/security.md`
 - `docs/enterprise-readiness.md`
 - `docs/security-checklist.md`
+- `docs/agent-operating-model.md`
 - `docs/platform-roadmap.md`
 - `docs/architecture-decisions/`
 - `docs/accessibility.md`
 - `docs/performance.md`
+
+## Agent Operating Model
+
+Codex guardrail skills live under `.codex/skills`, with the recommended agent workflow documented in `docs/agent-operating-model.md`. These skills are documentation-only checklists for tenant isolation, auth/RBAC, Prisma safety, PII/audit review, accessibility, observability, dependency maintenance, custom domains, release readiness, and security diff review.
 
 ## Git Workflow
 

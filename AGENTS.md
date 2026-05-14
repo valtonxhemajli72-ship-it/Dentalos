@@ -107,6 +107,17 @@ Tenant isolation roadmap:
 - Do not paste real secrets or real patient data into AI coding tools.
 - Review AI-generated code before merging, especially for auth, tenant isolation, PII, payment, AI, and medical workflows.
 
+## Codex Skills
+
+- Repository-specific Codex skills live in `.codex/skills`.
+- Use relevant skills before security-sensitive tasks.
+- Use `security-diff-review` before committing major auth, tenant, or data changes.
+- Use `prisma-migration-review` before schema changes.
+- Use `tenant-security-review` for tenant-owned data access.
+- Use `pii-and-audit-review` for logs, audit metadata, and telemetry.
+- Do not create skills that encourage bypassing checks.
+- Do not put secrets or real patient data in skills.
+
 ## Testing Expectations
 
 - Add tests with the same vertical slice when behavior becomes non-trivial.
