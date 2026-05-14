@@ -1,8 +1,17 @@
-export type TenantRole = "OWNER" | "ADMIN" | "CLINICIAN" | "STAFF";
+export type TenantRole =
+  | "OWNER"
+  | "ADMIN"
+  | "DOCTOR"
+  | "RECEPTIONIST"
+  | "MANAGER"
+  | "CLINICIAN"
+  | "STAFF";
 
 export type TenantContext = {
   tenantId: string;
   userId: string;
+  userEmail?: string;
+  membershipId: string;
   role: TenantRole;
   tenantName?: string;
 };
@@ -21,7 +30,7 @@ export type TenantOwnedModel = (typeof tenantOwnedModels)[number];
 export function assertTenantContext(
   context: TenantContext | null,
 ): asserts context is TenantContext {
-  if (!context?.tenantId || !context.userId) {
+  if (!context?.tenantId || !context.userId || !context.membershipId) {
     throw new Error("Tenant context is required.");
   }
 }
@@ -94,12 +103,14 @@ export function assertTenantOwnedData(
 export function getTenantDisplayContext(context: TenantContext): {
   tenantId: string;
   actorUserId: string;
+  membershipId: string;
   role: TenantRole;
   label: string;
 } {
   return {
     tenantId: context.tenantId,
     actorUserId: context.userId,
+    membershipId: context.membershipId,
     role: context.role,
     label: context.tenantName ?? "Selected clinic",
   };

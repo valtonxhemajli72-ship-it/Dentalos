@@ -14,7 +14,8 @@ This roadmap preserves enterprise architecture decisions without installing heav
 - Tenant-owned queries require tenant context.
 - Patient import, patient list, and recall review use tenant-scoped persistence when a database is configured.
 - Local/demo mode can fall back safely when database access is unavailable.
-- Real auth, delivery integrations, payments, AI calls, and advanced workflow infrastructure are intentionally not implemented yet.
+- A provider-neutral auth and RBAC boundary exists; real auth provider login is intentionally not implemented yet.
+- Delivery integrations, payments, AI calls, and advanced workflow infrastructure are intentionally not implemented yet.
 
 ## Enterprise Architecture Target
 
@@ -43,7 +44,7 @@ These are planned capabilities, not active dependencies or deployed services.
 
 ## What We Implement Later
 
-- Real production authentication and tenant membership enforcement.
+- Real production authentication provider, login UI, tenant switching, and user management on top of the current auth/RBAC boundary.
 - PostgreSQL Row-Level Security for shared-schema tenant isolation.
 - Durable workflow engine once recall campaigns and onboarding/offboarding workflows become long-running.
 - CDC and analytical warehouse once operational reporting exceeds transactional database needs.
@@ -85,8 +86,8 @@ Do not use CDC or analytics pipelines for raw patient PII unless a reviewed priv
 
 ## Security And Policy Roadmap
 
-- Now: tenant helper functions, audit metadata checks, security review docs, and local policy interface.
-- Next: production authentication, RBAC, permission checks, and PostgreSQL RLS.
+- Now: tenant helper functions, auth/RBAC boundary, audit metadata checks, security review docs, and local policy interface.
+- Next: production authentication provider, tenant switching, user management, and PostgreSQL RLS.
 - Later: OPA policy-as-code for complex enterprise policies.
 - Later: Falco for Kubernetes/container runtime security.
 - Later: cert-manager and External Secrets Operator for Kubernetes TLS and secret delivery.
@@ -159,4 +160,4 @@ Offboarding is not implemented yet.
 - Regional infrastructure boundaries.
 - Tenant onboarding/offboarding automation.
 - SLA dashboards or promised SLA tiers.
-- Real SMS, email, WhatsApp, payment, auth provider, or OpenAI calls.
+- Real SMS, email, WhatsApp, payment, auth provider login, or OpenAI calls.

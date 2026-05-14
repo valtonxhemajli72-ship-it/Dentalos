@@ -30,7 +30,9 @@ Request -> Auth -> Tenant resolution -> Permission check -> Validation -> Domain
 
 Each step should be explicit in code once that layer exists. Missing context should fail closed.
 
-Development auth provides a deterministic local Klinika360 tenant only outside production. Production must use real authentication and membership checks before private routes are usable.
+Development auth provides a deterministic local Klinika360 tenant only outside production. Production fails closed because no real provider is wired yet. The auth boundary exposes `getCurrentUser`, `requireCurrentUser`, `getCurrentTenantContext`, `requireTenantContext`, `requireMembership`, `requireRole`, and `requirePermission`; product routes and server actions should use those helpers instead of reading sessions directly.
+
+RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages require `patient:read`, patient import pages and actions require `patient:import`, recall pages require `recall:read`, and campaign preparation placeholders check `campaign:prepare`.
 
 ## Event Examples
 

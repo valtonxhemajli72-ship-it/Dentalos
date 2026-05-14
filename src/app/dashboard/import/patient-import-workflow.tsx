@@ -45,7 +45,8 @@ export function PatientImportWorkflow() {
           <h2 className="text-base font-semibold text-ink">Paste patient CSV</h2>
           <p className="mt-1 text-sm leading-6 text-muted">
             Use this MVP flow to preview a clinic list before recall review. No messages are sent
-            from this workflow, and role-based production access is planned before launch.
+            from this workflow, and saving requires tenant membership plus patient import
+            permission.
           </p>
         </div>
         <div className="p-5">

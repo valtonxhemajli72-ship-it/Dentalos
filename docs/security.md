@@ -32,10 +32,15 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 
 ## Auth and RBAC Baseline
 
-- Private routes require authentication.
+- Private routes require authentication and tenant context through `src/server/auth`.
+- Development demo auth is deterministic and only active outside production.
+- Production fails closed because no real provider is wired yet; do not add production auth bypasses.
 - Users access tenant data through memberships.
-- Start with simple roles such as owner, admin, clinician, and staff.
-- Check permissions before sensitive reads, exports, message sends, or billing actions.
+- Supported roles are owner, admin, doctor, receptionist, manager, and staff. `CLINICIAN` remains only as a legacy compatibility alias.
+- Check permissions before sensitive reads, imports, exports, message sends, campaign preparation, settings changes, audit reads, user management, or billing reads.
+- Patient import persistence requires `patient:import`.
+- Patient lists require `patient:read`.
+- Recall review requires `recall:read`; campaign preparation requires `campaign:prepare`.
 - Session and tenant switching should be auditable when implemented.
 
 ## Audit Log Strategy
@@ -95,7 +100,7 @@ DentalOS should not make diagnosis, treatment, or clinical necessity claims. Pro
 
 ## Intentionally Not Implemented Yet
 
-- Real authentication provider and production RBAC.
+- Real authentication provider, login UI, tenant switching UI, and user management UI.
 - Real SMS, email, WhatsApp, or phone integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

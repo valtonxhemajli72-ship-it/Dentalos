@@ -4,7 +4,7 @@ Klinika360 is a multi-tenant SaaS platform for dental clinics. DentalOS remains 
 
 The first version should help a clinic consistently bring patients back into care without adding more manual work to the front desk.
 
-Klinika360 is designed for doctors, receptionists, clinic managers, administrative staff, and other clinic team members. Role-based production access is planned; current local/demo auth is intentionally limited and fails safely in production.
+Klinika360 is designed for doctors, receptionists, clinic managers, administrative staff, and other clinic team members. Private dashboard flows now use an internal auth, tenant, membership, and RBAC boundary. The current demo identity is local-development only; production fails closed until a real auth provider is configured.
 
 ## Initial Wedge
 
@@ -74,6 +74,8 @@ Required later for database-backed work:
 
 - `DATABASE_URL`
 - `AUTH_SECRET`
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
 - `NEXT_PUBLIC_APP_URL`
 
 Optional integration placeholders:
@@ -91,6 +93,7 @@ Optional integration placeholders:
 - `npm run typecheck` - generate Next.js route types and run TypeScript without emitting files.
 - `npm run format` - format the repository with Prettier.
 - `npm run format:check` - check formatting.
+- `npm run auth:validate` - run dependency-free RBAC mapping checks.
 - `npm run db:validate` - validate the Prisma schema.
 - `npm run db:seed` - manually seed fake demo data after a database and schema are available.
 
@@ -99,6 +102,8 @@ Optional integration placeholders:
 DentalOS is a modular monolith first. Product UI, application logic, domain modules, data access, events/jobs, and AI orchestration should remain separated even while they deploy as one application.
 
 The MVP tenancy model is a shared app and shared PostgreSQL database. Every tenant-owned record must be modeled with `tenantId`, and every tenant-owned query must include tenant context. Private routes must require authentication and tenant resolution before data access. AI is an assistant layer that suggests drafts or actions; the system remains the source of truth.
+
+Auth currently uses a provider-neutral server boundary in `src/server/auth`. Development and test environments receive a deterministic Klinika360 demo user, tenant, membership, and `OWNER` role. Production receives no demo session and private dashboard routes render an access-required state instead of using a bypass. Permissions are defined in `src/server/auth/permissions.ts` and cover patients, recall, campaigns, notifications, settings, audit, users, and billing read access.
 
 The current patient import workflow helps a clinic paste a CSV, validate rows, preview masked contact indicators, save valid tenant-scoped patient records when a database is configured, and prepare recall review. It creates a `PatientImportBatch` with counts only. It does not store raw CSV content and does not send email, SMS, WhatsApp, payment, or AI requests.
 
@@ -143,8 +148,8 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 
 ## MVP Roadmap
 
-1. Add authentication and tenant membership.
-2. Add real authentication and tenant switching.
+1. Wire a real authentication provider into the current auth boundary.
+2. Add tenant switching and user management for invited clinic staff.
 3. Build patient import review history and duplicate resolution.
 4. Create recall campaign draft and approval flows.
 5. Add appointment reminder workflows.
@@ -162,7 +167,7 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 
 ## Intentionally Not Implemented Yet
 
-- Production authentication and full RBAC.
+- Real authentication provider, login UI, tenant switching UI, and user management UI.
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Payment processing.
 - Real OpenAI or other AI provider calls.

@@ -10,6 +10,9 @@ datasource db {
 enum MembershipRole {
   OWNER
   ADMIN
+  DOCTOR
+  RECEPTIONIST
+  MANAGER
   CLINICIAN
   STAFF
 }
