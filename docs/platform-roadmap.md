@@ -60,6 +60,39 @@ The wedge product still needs rapid iteration around patient import, recall revi
 
 The right compromise is to define stable internal ports now and keep implementations no-op or local. That prevents vendor calls from leaking into product modules while keeping the MVP easy to build and run.
 
+## Backend Scalability Path
+
+Backend scalability should evolve in stages, driven by measured workload and product complexity rather than a premature service split.
+
+Stage 1:
+
+- Next.js modular monolith as the web/BFF layer.
+- Prisma and PostgreSQL for tenant-owned persistence.
+- Tenant-scoped repositories for every tenant-owned query and write.
+- Domain logic in `src/modules`.
+- Dependency-free server interfaces in `src/server`.
+
+Stage 2:
+
+- Worker process for background work.
+- Queue abstraction before choosing a queue provider.
+- Redis for rate limits, low-risk cache, short-lived locks, or queue backend needs when justified.
+- Background jobs for imports, campaign preparation, notifications, reports, onboarding, and offboarding.
+- PgBouncer or equivalent connection pooling when Next.js and workers create database connection pressure.
+
+Stage 3:
+
+- Dedicated API backend if multiple clients, backend scale, deployment cadence, or team ownership justify it.
+- NestJS or Fastify are TypeScript candidates; Go is a candidate for high-concurrency operational services.
+- Service boundary extraction follows existing modules, repositories, jobs, events, and workflow interfaces.
+- API gateway and load balancing only after an API backend exists and traffic patterns justify them.
+
+Stage 4:
+
+- Enterprise infrastructure such as ALB, WAF, ECS, RDS, ElastiCache, SQS, Grafana, and Prometheus.
+- These are planned deployment options, not installed services.
+- Any enterprise infrastructure must preserve tenant isolation, no-PII observability, data residency decisions, and reviewed operational runbooks.
+
 ## Tenant Isolation Stages
 
 1. MVP: shared schema, shared PostgreSQL database, `tenantId` on tenant-owned rows, and tenant-scoped repositories.
@@ -161,4 +194,5 @@ Offboarding is not implemented yet.
 - Regional infrastructure boundaries.
 - Tenant onboarding/offboarding automation.
 - SLA dashboards or promised SLA tiers.
+- Redis, queues, workers, a dedicated backend API, or API gateway.
 - Real SMS, email, WhatsApp, payment, tenant switching, staff invitation, password auth, SSO/SAML, or OpenAI calls.
