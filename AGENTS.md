@@ -15,6 +15,18 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - Prefer human-readable branches such as `feature/recall-mvp`, `feature/patient-import`, `feature/import-persistence`, `chore/enterprise-baseline`, and `chore/platform-roadmap`.
 - Future enterprise services must go through internal interfaces before product modules depend on them.
 
+## Backend Scalability Rules
+
+- Next.js is the current frontend and BFF/web application layer, not the permanent owner of all backend responsibilities.
+- Do not put heavy business logic directly in React components or page components.
+- Do not put long-running work inside server actions.
+- Domain logic belongs in `src/modules`.
+- Database access belongs in tenant-scoped repositories.
+- Future integrations must go through `src/server` interfaces before product modules depend on them.
+- If a task introduces background work, create or use a job/worker interface instead of doing it inline.
+- If a task adds high-volume operations, consider the Redis and queue strategy before implementation.
+- Do not add NestJS, Fastify, a Go service, or a separate backend unless the task explicitly asks for it and an ADR supports it.
+
 ## Security Rules
 
 - Do not expose secrets. Never print, commit, log, or paste real API keys, tokens, passwords, connection strings, or private certificates.

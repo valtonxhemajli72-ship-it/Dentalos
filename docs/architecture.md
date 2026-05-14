@@ -36,6 +36,82 @@ RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages re
 
 Tenant switching stores the selected tenant ID in an HTTP-only cookie. The selected value is never trusted by itself; `resolveActiveTenantForUser` revalidates it against the authenticated user’s active memberships and falls back to the first valid membership when needed. Team management and staff invitations live in the tenants module. Invitation records store `tokenHash` only and do not send email yet.
 
+## Backend Boundary
+
+Next.js is the current web and BFF layer. It renders dashboard screens, resolves auth and tenant context, validates request input, checks permissions, calls domain modules, and returns safe UI states. It should not become the permanent owner of every backend responsibility.
+
+```text
+Browser
+  -> Next.js App Router pages, route handlers, and server actions
+  -> auth, tenant, and permission helpers in src/server/auth
+  -> domain services in src/modules
+  -> tenant-scoped repositories
+  -> Prisma and PostgreSQL
+
+Domain services
+  -> jobs, events, workflows, audit, policy, metering, and observability interfaces in src/server
+  -> worker process and queue later when work becomes durable or long-running
+```
+
+Business rules should live in `src/modules`. Database access for tenant-owned data should live in tenant-scoped repositories. Future delivery providers, queues, workers, metrics, feature flags, policy engines, and workflow systems should enter through `src/server` interfaces before product modules depend on them.
+
+## Request Lifecycle
+
+```text
+Request
+  -> route/page/server action
+  -> authenticate user
+  -> resolve active tenant from membership
+  -> require permission
+  -> validate input
+  -> call domain service
+  -> use tenant-scoped repository
+  -> publish safe events or enqueue jobs when needed
+  -> write safe audit metadata
+  -> return response
+```
+
+Server actions are acceptable for small request-bound mutations. They should stay thin: resolve context, authorize, validate, call domain services, and return safe states. Large imports, campaign processing, notifications, report generation, provider retries, tenant onboarding, tenant offboarding, and integration syncs should move to workers once they stop being quick request-bound operations.
+
+## Worker And Job Lifecycle
+
+```text
+Server action or scheduled trigger
+  -> create tenant-aware job or workflow input
+  -> include idempotency key and safe metadata
+  -> enqueue through src/server/jobs or start workflow through src/server/workflows
+  -> worker loads tenant context by ID
+  -> worker calls domain service and tenant-scoped repositories
+  -> worker records no-PII metrics, events, and audit logs
+  -> worker retries or dead-letters according to queue policy
+```
+
+Job, event, and workflow payloads must carry tenant context explicitly and must not include raw CSV, patient names, emails, phones, notes, message bodies, provider payloads, tokens, or secrets.
+
+## What Belongs Where
+
+- `src/app`: routing, server actions, route handlers, page composition, form handling, and safe UI states.
+- `src/components`: reusable presentation and interaction components.
+- `src/modules`: domain rules, workflow-specific application logic, validation helpers, and repository-facing services.
+- `src/modules/*/repository.ts`: tenant-scoped data access for module-owned persistence.
+- `src/server/auth`: authentication, membership resolution, tenant context, and RBAC helpers.
+- `src/server/jobs`: job enqueueing boundary for future worker-backed work.
+- `src/server/events`: domain event boundary and future outbox or broker integration.
+- `src/server/workflows`: durable workflow boundary for future Temporal-style orchestration.
+- `src/server/observability`: metrics and instrumentation boundaries with no PII.
+- `src/server/db`: database client creation and infrastructure-level database concerns.
+
+## Backend Anti-Patterns
+
+- Direct Prisma access in React components or page components.
+- Business logic buried inside page components instead of domain modules.
+- Long-running jobs inside server actions.
+- Tenant-owned queries without `tenantId`.
+- Repository functions shaped like `getPatient(id)` for tenant-owned data.
+- Logs, metric labels, events, job payloads, workflow payloads, or audit metadata containing PII or secrets.
+- Provider SDK calls scattered through product modules.
+- Adding Redis, queues, workers, or a dedicated backend before an ADR-backed need exists.
+
 ## Event Examples
 
 - `patient.created`

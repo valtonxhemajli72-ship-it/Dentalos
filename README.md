@@ -105,6 +105,8 @@ Optional integration placeholders:
 
 DentalOS is a modular monolith first. Product UI, application logic, domain modules, data access, events/jobs, and AI orchestration should remain separated even while they deploy as one application.
 
+Next.js is the current web and BFF layer for the dashboard. Backend scalability is documented in `docs/backend-scalability-strategy.md`: future workers, queues, Redis, connection pooling, and a dedicated backend API are planned thresholds, not implemented infrastructure.
+
 The MVP tenancy model is a shared app and shared PostgreSQL database. Every tenant-owned record must be modeled with `tenantId`, and every tenant-owned query must include tenant context. Private routes must require authentication and tenant resolution before data access. AI is an assistant layer that suggests drafts or actions; the system remains the source of truth.
 
 Auth uses `next-auth` with Google OAuth as the first real provider path when `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, and `AUTH_SECRET` are configured. OAuth sessions map by email to an existing `User`, then to `Membership`, then to tenant context. Development demo auth requires `DEMO_AUTH_ENABLED="true"` and is ignored in production. Permissions are defined in `src/server/auth/permissions.ts` and cover patients, recall, campaigns, notifications, settings, audit, users, and billing read access.
@@ -120,6 +122,8 @@ See:
 - `docs/patient-import.md`
 - `docs/product-strategy.md`
 - `docs/recall-mvp.md`
+- `docs/backend-scalability-strategy.md`
+- `docs/backend-boundary-checklist.md`
 - `docs/security.md`
 - `docs/enterprise-readiness.md`
 - `docs/security-checklist.md`

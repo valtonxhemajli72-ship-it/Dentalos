@@ -12,3 +12,4 @@ These ADRs capture planned and accepted platform decisions for Klinika360. Denta
 - [ADR-008: Kubernetes security, secrets, and certificates later](ADR-008-kubernetes-security-falco-secrets-cert-manager.md)
 - [ADR-009: Data residency and tenant tiers](ADR-009-data-residency-and-tenant-tiers.md)
 - [ADR-010: Tenant onboarding and offboarding](ADR-010-tenant-onboarding-offboarding.md)
+- [ADR-011: Backend scalability boundary](ADR-011-backend-scalability-boundary.md)
