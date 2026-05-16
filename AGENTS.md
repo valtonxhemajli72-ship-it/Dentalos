@@ -60,6 +60,7 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - Server actions that write tenant-owned data must call `requirePermission()` before parsing or persisting input.
 - Tenant switching server actions must call `requirePermission("tenant:switch")` and then validate the requested tenant against active memberships.
 - Background jobs and event handlers must carry tenant context explicitly.
+- Job payloads and metadata must use stable IDs, counts, statuses, flags, and idempotency keys only; never include raw CSV, patient contact details, message bodies, invitation tokens, token hashes, auth tokens, cookies, provider payloads, or secrets.
 - Cross-tenant admin workflows need explicit authorization and audit logs.
 
 Tenant-owned models include `Patient`, `Appointment`, `RecallCampaign`, `NotificationMessage`, `PatientImportBatch`, and `AuditLog`. Repository functions must be named and shaped so tenant scope is obvious, for example `getPatientForTenant(tenantId, patientId)`. Do not add `getPatient(id)` style shortcuts.
@@ -142,6 +143,7 @@ Tenant isolation roadmap:
 - Keep UI tests focused on important user workflows.
 - Run available checks before handoff: format, lint, typecheck, build, and Prisma validation when practical.
 - Run `npm run tenant:validate` after tenant isolation, auth/RBAC, server action, audit, invitation, or dashboard guardrail changes.
+- Run `npm run jobs:validate` after changing job payloads, queue interfaces, worker boundaries, or related documentation.
 - Accessibility target is WCAG 2.2 AA. Preserve labels, semantic HTML, visible focus, contrast, keyboard access, and readable tables.
 - Performance target is Core Web Vitals. Prefer server components, avoid large client bundles, and do not add heavy libraries without a real need.
 

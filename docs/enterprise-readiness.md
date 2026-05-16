@@ -55,6 +55,7 @@ First clinic provisioning is available through a guarded CLI bootstrap only. It 
 - Run `npm run tenant:validate` for tenant isolation, server action, invitation, audit, and demo fallback guardrail changes.
 - Run `npm run rls:validate` for RLS readiness docs and schema guardrails before DB-level tenant isolation work.
 - Run `npm run campaign:validate` for recall campaign builder, review route, approval actions, permissions, schema, no-send, audit, and documentation guardrails.
+- Run `npm run jobs:validate` for worker/queue interface files, known job names, no real provider calls, and no-PII job metadata guardrails.
 - Treat PostgreSQL RLS as planned defense-in-depth only until staging policies, tenant context transactions, PgBouncer behavior, and rollback procedures are validated.
 - Enable branch protection with required CI, CodeQL, Semgrep, secret scanning, and review.
 - Configure production secrets through the deployment platform, not Git.
@@ -82,6 +83,7 @@ Add Husky, lint-staged, or Lefthook later when the team agrees on the local work
 
 - Real SMS, email, WhatsApp, or phone delivery integrations.
 - Recall campaign delivery, retries, and provider callbacks. The current campaign builder and approval flow save no-send planning records only.
+- Durable queue runtime and deployed workers. The current job interface is dependency-free and no-op/local only.
 - Payment processing.
 - Real OpenAI or other AI provider calls.
 - Dedicated single-tenant deployments.

@@ -81,6 +81,8 @@ Domain services
 
 Business rules should live in `src/modules`. Database access for tenant-owned data should live in tenant-scoped repositories. Future delivery providers, queues, workers, metrics, feature flags, policy engines, and workflow systems should enter through `src/server` interfaces before product modules depend on them.
 
+The first worker and queue boundary is `src/server/jobs`. It defines tenant-aware job payloads, idempotency requirements, no-PII metadata checks, a no-op queue client, and registry metadata for future import, recall campaign, notification, and report jobs. It does not run durable background work today.
+
 ## Request Lifecycle
 
 ```text
@@ -160,6 +162,7 @@ Start simple:
 - Patient import persistence writes patients, optional appointments, import batch counts, and safe audit events in a tenant-scoped transaction.
 - Patient duplicate lookups use tenant-scoped indexes for email, phone, and name plus last visit date. These indexes support lookup speed and do not create global uniqueness constraints.
 - Recall campaign draft creation, review submission, and approval are request-bound for the foundation only. Actual sending, retries, rate limits, and provider callbacks should move to workers and notification adapters before production delivery.
+- Patient import and campaign approval contain comments marking future `patient_import.process` and `recall_campaign.prepare` boundaries, but no job is enqueued today.
 
 Later:
 
@@ -189,6 +192,7 @@ Do not send patient PII to AI providers until the product has an explicit privac
 
 Advanced enterprise services are planned behind internal interfaces:
 
+- `src/server/jobs` for future queue-backed jobs and worker payload safety.
 - `src/server/workflows` for future Temporal-backed workflows.
 - `src/server/events` for domain event publishing and future outbox, broker, or CDC integration.
 - `src/server/policy` for future OPA-backed policy decisions.
