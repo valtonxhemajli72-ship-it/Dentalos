@@ -33,6 +33,13 @@ enum RecallCampaignStatus {
   ARCHIVED
 }
 
+enum RecallCampaignChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  MANUAL
+}
+
 enum NotificationChannel {
   EMAIL
   SMS
@@ -85,12 +92,13 @@ model Tenant {
   memberships      Membership[]
   invitations      TenantInvitation[]
 
-  patients      Patient[]
-  appointments  Appointment[]
-  campaigns     RecallCampaign[]
-  messages      NotificationMessage[]
-  auditLogs     AuditLog[]
-  importBatches PatientImportBatch[]
+  patients           Patient[]
+  appointments       Appointment[]
+  campaigns          RecallCampaign[]
+  campaignSelections RecallCampaignPatient[]
+  messages           NotificationMessage[]
+  auditLogs          AuditLog[]
+  importBatches      PatientImportBatch[]
 
   @@index([setupStatus])
 }
@@ -107,6 +115,7 @@ model User {
   importBatches       PatientImportBatch[]
   sentInvitations     TenantInvitation[]   @relation("TenantInvitationInvitedBy")
   acceptedInvitations TenantInvitation[]   @relation("TenantInvitationAcceptedBy")
+  createdCampaigns    RecallCampaign[]     @relation("RecallCampaignCreatedBy")
 }
 
 model Membership {
@@ -150,7 +159,7 @@ model TenantInvitation {
 }
 
 model Patient {
-  id                     String                @id @default(cuid())
+  id                     String                  @id @default(cuid())
   tenantId               String
   externalRef            String?
   firstName              String
@@ -158,19 +167,20 @@ model Patient {
   email                  String?
   phone                  String?
   dateOfBirth            DateTime?
-  acceptsEmail           Boolean               @default(true)
-  acceptsSms             Boolean               @default(false)
+  acceptsEmail           Boolean                 @default(true)
+  acceptsSms             Boolean                 @default(false)
   lastVisitAt            DateTime?
   nextRecallDueAt        DateTime?
-  preferredRecallChannel PatientContactChannel @default(EMAIL)
+  preferredRecallChannel PatientContactChannel   @default(EMAIL)
   lastRecallContactedAt  DateTime?
   recallOptOutAt         DateTime?
-  isActive               Boolean               @default(true)
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime              @updatedAt
-  tenant                 Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  isActive               Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   appointments           Appointment[]
   recallCampaigns        RecallCampaign[]
+  campaignSelections     RecallCampaignPatient[]
   notificationMessages   NotificationMessage[]
 
   @@index([tenantId, lastName, firstName])
@@ -200,20 +210,47 @@ model Appointment {
 }
 
 model RecallCampaign {
-  id        String                @id @default(cuid())
-  tenantId  String
-  patientId String?
-  name      String
-  status    RecallCampaignStatus  @default(DRAFT)
-  startsAt  DateTime?
-  endedAt   DateTime?
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
-  tenant    Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  patient   Patient?              @relation(fields: [patientId], references: [id], onDelete: SetNull)
-  messages  NotificationMessage[]
+  id               String                  @id @default(cuid())
+  tenantId         String
+  patientId        String?
+  name             String
+  status           RecallCampaignStatus    @default(DRAFT)
+  channel          RecallCampaignChannel   @default(MANUAL)
+  audienceCount    Int                     @default(0)
+  messageTemplate  String?
+  templatePreview  String?
+  createdByUserId  String?
+  startsAt         DateTime?
+  endedAt          DateTime?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient          Patient?                @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  createdBy        User?                   @relation("RecallCampaignCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  selectedPatients RecallCampaignPatient[]
+  messages         NotificationMessage[]
 
   @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, channel])
+  @@index([createdByUserId])
+}
+
+model RecallCampaignPatient {
+  id                String         @id @default(cuid())
+  tenantId          String
+  campaignId        String
+  patientId         String
+  recommendedAction String
+  recallStatus      String
+  selectedAt        DateTime       @default(now())
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign          RecallCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  patient           Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, campaignId, patientId])
+  @@index([tenantId, campaignId])
+  @@index([tenantId, patientId])
 }
 
 model NotificationMessage {

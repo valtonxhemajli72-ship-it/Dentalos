@@ -9,6 +9,7 @@ const expectedTenantScopedModels = [
   "Patient",
   "Appointment",
   "RecallCampaign",
+  "RecallCampaignPatient",
   "NotificationMessage",
   "PatientImportBatch",
   "AuditLog",

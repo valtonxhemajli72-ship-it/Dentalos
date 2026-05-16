@@ -20,6 +20,11 @@ import {
   type RecallStatus,
 } from "@/modules/patients/recall";
 import {
+  getCampaignReadinessForTenant,
+  listRecallCampaignsForTenant,
+  type RecallCampaignRepositoryDatabase,
+} from "@/modules/recall/repository";
+import {
   isAuthBoundaryError,
   isDemoTenantContext,
   isDevelopmentAuthEnabled,
@@ -111,10 +116,10 @@ export default async function RecallDashboardPage() {
               Import patients
             </Link>
             <Link
-              href="/dashboard"
+              href="/dashboard/recall/campaigns/new"
               className="inline-flex min-h-10 w-fit items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
             >
-              Back to dashboard
+              Create campaign
             </Link>
           </div>
         </div>
@@ -147,10 +152,10 @@ export default async function RecallDashboardPage() {
         <Card>
           <p className="text-sm font-semibold text-ink">Campaign readiness</p>
           <p className="mt-3 text-2xl font-semibold text-brand-700">
-            {snapshot.campaignDraft.readyToContact}
+            {data.campaignReadiness.selectedByDefaultCount}
           </p>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Ready patients can be moved into a campaign draft after review.
+            Patients preselected for a no-send campaign draft.
           </p>
         </Card>
       </section>
@@ -217,17 +222,27 @@ export default async function RecallDashboardPage() {
               />
             </dl>
             <div className="mt-5 rounded-md border border-line bg-surface p-4 text-sm leading-6 text-muted">
-              Sending is intentionally not implemented yet. The MVP prepares safe worklists first;
-              delivery adapters come after auth, tenant resolution, and approval flows.
+              Sending is intentionally not implemented. The MVP saves tenant-owned DRAFT campaigns
+              only; delivery adapters come after auth, tenant resolution, approval flows, and worker
+              boundaries.
             </div>
             <div className="mt-5 flex flex-col gap-3">
-              <button
-                type="button"
-                disabled
-                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white opacity-60"
-              >
-                {canPrepareCampaign ? "Prepare campaign draft" : "Campaign permission required"}
-              </button>
+              {canPrepareCampaign ? (
+                <Link
+                  href="/dashboard/recall/campaigns/new"
+                  className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+                >
+                  Create campaign draft
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white opacity-60"
+                >
+                  Campaign permission required
+                </button>
+              )}
               <Link
                 href="/dashboard/import"
                 className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface"
@@ -235,6 +250,29 @@ export default async function RecallDashboardPage() {
                 {hasPatients ? "Review import data" : "Import patients first"}
               </Link>
             </div>
+          </Card>
+
+          <Card>
+            <h2 className="text-base font-semibold text-ink">Saved drafts</h2>
+            <p className="mt-3 text-2xl font-semibold text-brand-700">
+              {data.campaignReadiness.existingDraftCount}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Drafts are internal planning records. No delivery is triggered.
+            </p>
+            {data.campaignDrafts.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {data.campaignDrafts.map((draft) => (
+                  <div key={draft.id} className="rounded-md border border-line bg-surface p-3">
+                    <p className="text-sm font-semibold text-ink">{draft.name}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {draft.audienceCount} patients - {draft.channel} -{" "}
+                      {dateFormatter.format(draft.createdAt)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </Card>
 
           <Card>
@@ -273,6 +311,17 @@ type RecallPageData = {
     validRowCount: number;
     invalidRowCount: number;
   };
+  campaignReadiness: {
+    existingDraftCount: number;
+    selectedByDefaultCount: number;
+  };
+  campaignDrafts: Array<{
+    id: string;
+    name: string;
+    channel: string;
+    audienceCount: number;
+    createdAt: Date;
+  }>;
 };
 
 async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData> {
@@ -280,12 +329,19 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
 
   try {
     const db = getPrismaClient();
-    const [candidates, latestImport] = await Promise.all([
+    const [candidates, latestImport, campaignReadiness, campaignDrafts] = await Promise.all([
       listRecallCandidatesForTenant(tenant.tenantId, asOf, {
         db: db as unknown as PatientRepositoryDatabase,
       }),
       getLatestPatientImportBatchForTenant(tenant.tenantId, {
         db: db as unknown as PatientImportRepositoryDatabase,
+      }),
+      getCampaignReadinessForTenant(tenant.tenantId, {
+        db: db as unknown as RecallCampaignRepositoryDatabase,
+      }),
+      listRecallCampaignsForTenant(tenant.tenantId, {
+        db: db as unknown as RecallCampaignRepositoryDatabase,
+        take: 3,
       }),
     ]);
 
@@ -319,6 +375,17 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
             validRowCount: 0,
             invalidRowCount: 0,
           },
+      campaignReadiness: {
+        existingDraftCount: campaignReadiness.existingDraftCount,
+        selectedByDefaultCount: campaignReadiness.selectedByDefaultCount,
+      },
+      campaignDrafts: campaignDrafts.map((draft) => ({
+        id: draft.id,
+        name: draft.name,
+        channel: draft.channel,
+        audienceCount: draft.audienceCount,
+        createdAt: draft.createdAt,
+      })),
     };
   } catch (error) {
     if (!canUseDemoFallback(tenant)) {
@@ -334,6 +401,11 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
             validRowCount: 0,
             invalidRowCount: 0,
           },
+          campaignReadiness: {
+            existingDraftCount: 0,
+            selectedByDefaultCount: 0,
+          },
+          campaignDrafts: [],
         };
       }
 
@@ -342,6 +414,7 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
 
     const demoPreview = createPatientImportClientPreview(patientImportExampleCsv);
     const candidates = listDemoRecallCandidatesForTenant(tenant.tenantId);
+    const demoSnapshot = buildRecallWorkspaceSnapshot(candidates, asOf);
 
     return {
       asOf,
@@ -354,6 +427,13 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
         validRowCount: demoPreview.summary.validRowCount,
         invalidRowCount: demoPreview.summary.invalidRowCount,
       },
+      campaignReadiness: {
+        existingDraftCount: 0,
+        selectedByDefaultCount: demoSnapshot.queue.filter((candidate) =>
+          ["send_recall_message", "send_gentle_nudge"].includes(candidate.recommendedAction),
+        ).length,
+      },
+      campaignDrafts: [],
     };
   }
 }

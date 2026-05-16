@@ -127,6 +127,7 @@ Optional integration placeholders:
 - `npm run bootstrap:validate` - run dependency-free admin bootstrap guardrail checks.
 - `npm run tenant:validate` - run dependency-free tenant security guardrail checks.
 - `npm run rls:validate` - run dependency-free RLS readiness documentation and schema guardrail checks.
+- `npm run campaign:validate` - run dependency-free recall campaign builder guardrail checks.
 - `npm run dev:db` - start the local PostgreSQL service with Docker Compose.
 - `npm run db:migrate` - apply Prisma migrations to the configured database.
 - `npm run db:generate` - generate Prisma Client.
@@ -152,6 +153,8 @@ Tenant switching is backed by validated memberships. When a user has multiple me
 Invitation acceptance is available at `/invitations/accept?token=...`. The accepting user must authenticate with the invited email address; the server hashes and validates the token, derives tenant and role from the invitation record, creates or reuses a tenant membership safely, and records audit events without raw tokens, token hashes, or email addresses in metadata.
 
 The current patient import workflow helps a clinic paste a CSV, validate rows, preview masked contact indicators, save valid tenant-scoped patient records when a database is configured, and prepare recall review. It creates a `PatientImportBatch` with counts only. It does not store raw CSV content and does not send email, SMS, WhatsApp, payment, or AI requests.
+
+The recall campaign builder at `/dashboard/recall/campaigns/new` creates tenant-owned DRAFT campaigns from validated recall candidates. It supports SMS, email, WhatsApp, and manual-call placeholders as no-send planning channels only. Selected patients are revalidated against the current tenant before persistence, and audit metadata stores counts, status, and channel only.
 
 See:
 
@@ -209,7 +212,7 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 
 1. Add staff invitation email delivery behind a notification adapter.
 2. Build patient import review history and duplicate resolution.
-3. Create recall campaign draft and approval flows.
+3. Add campaign approval and reviewed outbound delivery adapters behind server boundaries.
 4. Add appointment reminder workflows.
 5. Add notification delivery adapters behind safe interfaces.
 6. Add audit logs and operational reporting.

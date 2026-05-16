@@ -20,6 +20,7 @@ export const tenantOwnedModels = [
   "Patient",
   "Appointment",
   "RecallCampaign",
+  "RecallCampaignPatient",
   "NotificationMessage",
   "PatientImportBatch",
   "TenantInvitation",

@@ -14,6 +14,7 @@ This roadmap preserves enterprise architecture decisions without installing heav
 - Tenant-owned queries require tenant context.
 - PostgreSQL RLS is documented as a future defense-in-depth layer and is not enabled yet.
 - Patient import, patient list, and recall review use tenant-scoped persistence when a database is configured.
+- Recall campaign builder foundation saves no-send DRAFT campaigns from tenant-validated recall candidates.
 - Local/demo mode can fall back safely when database access is unavailable.
 - A NextAuth/Auth.js-compatible auth and RBAC boundary exists with Google OAuth as the first real provider path.
 - Tenant switching, staff invitation records, and invitation acceptance exist without email delivery.
@@ -47,6 +48,7 @@ These are planned capabilities, not active dependencies or deployed services.
 ## What We Implement Later
 
 - Invitation email delivery, staff provisioning polish, and more enterprise auth options on top of the current auth/RBAC boundary.
+- Recall campaign approval and delivery adapters after the no-send draft foundation proves the workflow.
 - Tenant consistency constraints and PostgreSQL Row-Level Security for shared-schema defense-in-depth.
 - Durable workflow engine once recall campaigns and onboarding/offboarding workflows become long-running.
 - CDC and analytical warehouse once operational reporting exceeds transactional database needs.

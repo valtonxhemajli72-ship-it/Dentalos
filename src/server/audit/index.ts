@@ -42,7 +42,12 @@ export type AuditAction =
   | "patient_import.imported"
   | "patient_import.failed"
   | "recall_candidates.viewed"
-  | "recall_campaign.prepared";
+  | "recall_campaign.prepared"
+  | "recall_campaign.draft_created"
+  | "recall_campaign.previewed"
+  | "recall_campaign.audience_validated"
+  | "recall_campaign.patient_selected"
+  | "recall_campaign.create_failed";
 
 export type AuditMetadata = Record<string, AuditMetadataValue>;
 
@@ -676,6 +681,70 @@ export function createRecallCampaignPreparedAuditEvent(
     action: "recall_campaign.prepared",
     entityType: "RecallCampaign",
     entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignDraftCreatedAuditEvent(
+  tenant: TenantContext,
+  campaignId: string,
+  metadata: { audienceCount: number; status: string; channel: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.draft_created",
+    entityType: "RecallCampaign",
+    entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignPreviewedAuditEvent(
+  tenant: TenantContext,
+  metadata: { audienceCount: number; channel: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.previewed",
+    entityType: "RecallCampaign",
+    metadata,
+  });
+}
+
+export function createRecallCampaignAudienceValidatedAuditEvent(
+  tenant: TenantContext,
+  metadata: { audienceCount: number; channel: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.audience_validated",
+    entityType: "RecallCampaign",
+    metadata,
+  });
+}
+
+export function createRecallCampaignPatientSelectedAuditEvent(
+  tenant: TenantContext,
+  campaignId: string,
+  metadata: { selectedCount: number },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.patient_selected",
+    entityType: "RecallCampaign",
+    entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignCreateFailedAuditEvent(
+  tenant: TenantContext,
+  metadata: { reason: string; status: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.create_failed",
+    entityType: "RecallCampaign",
     metadata,
   });
 }
