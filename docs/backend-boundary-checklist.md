@@ -42,6 +42,8 @@ Use this checklist when a PR adds or changes backend behavior, server actions, r
 - Are queries bounded with pagination, `take`, date windows, or status filters?
 - Are tenant-scoped indexes needed?
 - Do tenant-scoped updates and revocations include `tenantId` in the mutation filter, not only in a prior read?
+- If this adds a relationship between tenant-owned tables, could the child row's `tenantId` mismatch the parent row's `tenantId` without a composite tenant constraint?
+- Are future RLS assumptions documented when adding raw SQL, custom transactions, or connection-level database settings?
 - Could this increase PostgreSQL connection pressure enough to require PgBouncer planning?
 
 ## Observability

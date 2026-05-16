@@ -13,3 +13,4 @@ These ADRs capture planned and accepted platform decisions for Klinika360. Denta
 - [ADR-009: Data residency and tenant tiers](ADR-009-data-residency-and-tenant-tiers.md)
 - [ADR-010: Tenant onboarding and offboarding](ADR-010-tenant-onboarding-offboarding.md)
 - [ADR-011: Backend scalability boundary](ADR-011-backend-scalability-boundary.md)
+- [ADR-012: PostgreSQL RLS readiness](ADR-012-postgresql-rls-readiness.md)

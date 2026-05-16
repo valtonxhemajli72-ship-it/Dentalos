@@ -126,6 +126,7 @@ Optional integration placeholders:
 - `npm run bootstrap:admin` - run the guarded first clinic admin bootstrap CLI.
 - `npm run bootstrap:validate` - run dependency-free admin bootstrap guardrail checks.
 - `npm run tenant:validate` - run dependency-free tenant security guardrail checks.
+- `npm run rls:validate` - run dependency-free RLS readiness documentation and schema guardrail checks.
 - `npm run dev:db` - start the local PostgreSQL service with Docker Compose.
 - `npm run db:migrate` - apply Prisma migrations to the configured database.
 - `npm run db:generate` - generate Prisma Client.
@@ -140,7 +141,7 @@ DentalOS is a modular monolith first. Product UI, application logic, domain modu
 
 Next.js is the current web and BFF layer for the dashboard. Backend scalability is documented in `docs/backend-scalability-strategy.md`: future workers, queues, Redis, connection pooling, and a dedicated backend API are planned thresholds, not implemented infrastructure.
 
-The MVP tenancy model is a shared app and shared PostgreSQL database. Every tenant-owned record must be modeled with `tenantId`, and every tenant-owned query must include tenant context. Private routes must require authentication and tenant resolution before data access. AI is an assistant layer that suggests drafts or actions; the system remains the source of truth.
+The MVP tenancy model is a shared app and shared PostgreSQL database. Every tenant-owned record must be modeled with `tenantId`, and every tenant-owned query must include tenant context. Private routes must require authentication and tenant resolution before data access. PostgreSQL Row-Level Security is planned as future database-level defense-in-depth after tenant consistency constraints, staging policy tests, and connection pooling behavior are validated. AI is an assistant layer that suggests drafts or actions; the system remains the source of truth.
 
 Auth uses `next-auth` with Google OAuth as the first real provider path when `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, and `AUTH_SECRET` are configured. OAuth sessions map by email to an existing `User`, then to `Membership`, then to tenant context. Development demo auth requires `DEMO_AUTH_ENABLED="true"` and is ignored in production. Permissions are defined in `src/server/auth/permissions.ts` and cover patients, recall, campaigns, notifications, settings, audit, users, and billing read access.
 
@@ -164,6 +165,7 @@ See:
 - `docs/recall-mvp.md`
 - `docs/backend-scalability-strategy.md`
 - `docs/backend-boundary-checklist.md`
+- `docs/rls-readiness.md`
 - `docs/security.md`
 - `docs/enterprise-readiness.md`
 - `docs/security-checklist.md`
@@ -216,7 +218,8 @@ Governance files include `SECURITY.md`, `CODEOWNERS`, pull request templates, an
 ## Tenant Isolation Roadmap
 
 - MVP: shared schema, shared PostgreSQL database, and `tenantId` on tenant-owned rows.
-- Next: PostgreSQL Row-Level Security.
+- Next: tenant consistency constraints and PostgreSQL Row-Level Security readiness.
+- Later: PostgreSQL Row-Level Security after staging validation.
 - Later: schema-per-tenant for mid-market tenants if needed.
 - Later: database-per-tenant for enterprise tenants if paid or contractually required.
 - Later: PgBouncer or equivalent connection pooling as database concurrency grows.

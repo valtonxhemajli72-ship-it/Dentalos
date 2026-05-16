@@ -22,6 +22,8 @@ Background jobs and event handlers carry tenant context explicitly so asynchrono
 
 Tenant isolation helpers live in `src/modules/tenants`. Use `requireTenantId`, `createTenantScopedWhere`, `assertTenantScopedQuery`, and `assertTenantOwnedData` to make scope reviewable in code.
 
+PostgreSQL Row-Level Security is planned as a future database-level defense-in-depth layer for the same shared-schema model. RLS is not enabled today. Before enabling it, tenant-owned relationships should gain tenant consistency checks where practical, such as composite child references that include both `tenantId` and the parent ID. See `docs/rls-readiness.md` and ADR-012 for the policy shape and rollout gates.
+
 ## Local Database Runtime
 
 Local development uses Docker Compose PostgreSQL, Prisma migrations, and a deterministic fake seed dataset. The seeded data mirrors the development auth contract so private dashboard routes can resolve a real `User`, `Membership`, and `Tenant` when `DEMO_AUTH_ENABLED="true"`.

@@ -10,6 +10,7 @@ Enterprise readiness means the product is secure, accessible, fast, reviewable, 
 - Accessibility: WCAG 2.2 AA.
 - Performance: Core Web Vitals, fast dashboard navigation, and minimal client-side code.
 - Tenancy: shared app, shared PostgreSQL, `tenantId` on tenant-owned records.
+- Database isolation roadmap: application-layer tenant isolation now, tenant consistency constraints next, PostgreSQL RLS later after staging validation.
 - Governance: CI required checks, code owners, security reporting, dependency monitoring, and secret scanning.
 - Platform posture: document long-term infrastructure choices early, but keep current implementations no-op or local until explicitly needed.
 
@@ -52,6 +53,8 @@ First clinic provisioning is available through a guarded CLI bootstrap only. It 
 - Preserve last-owner protection for every role management workflow.
 - Keep production dashboard pages from falling back to demo patient or recall records when persistence is unavailable.
 - Run `npm run tenant:validate` for tenant isolation, server action, invitation, audit, and demo fallback guardrail changes.
+- Run `npm run rls:validate` for RLS readiness docs and schema guardrails before DB-level tenant isolation work.
+- Treat PostgreSQL RLS as planned defense-in-depth only until staging policies, tenant context transactions, PgBouncer behavior, and rollback procedures are validated.
 - Enable branch protection with required CI, CodeQL, Semgrep, secret scanning, and review.
 - Configure production secrets through the deployment platform, not Git.
 - Review security headers and move CSP from report-only to enforced mode after validation.
