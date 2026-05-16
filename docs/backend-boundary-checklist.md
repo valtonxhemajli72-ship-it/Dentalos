@@ -34,6 +34,8 @@ Use this checklist when a PR adds or changes backend behavior, server actions, r
 - Does it need idempotency keys?
 - Does it need distributed locking or tenant-level serialization?
 - Would Redis or a queue be justified by this workload, or should the interface remain no-op for now?
+- If it uses `src/server/jobs`, does the payload include `tenantId`, an idempotency key, and only safe IDs/counts/statuses/flags?
+- Does job metadata avoid raw CSV, patient contact data, message bodies, invitation tokens, token hashes, auth tokens, cookies, provider payloads, and secrets?
 
 ## Database Access
 

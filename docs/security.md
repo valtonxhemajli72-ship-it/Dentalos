@@ -86,6 +86,8 @@ Admin bootstrap audit metadata must use tenant IDs, user IDs, membership IDs, st
 
 Audit metadata guardrails reject unsafe keys such as raw names, emails, phones, notes, message bodies, CSV content, tokens, secrets, passwords, sessions, cookies, OAuth payloads, and credentials. Treat audit metadata as a strict allow-list of counts, statuses, IDs, roles, booleans, and non-sensitive reason codes.
 
+Job payloads and metadata follow the same privacy posture. Tenant-owned jobs must include `tenantId` and an idempotency key, and job metadata must avoid patient names, emails, phones, notes, raw CSV, message bodies, invitation tokens, token hashes, auth tokens, cookies, provider payloads, sessions, and secrets. `src/server/jobs` is a no-op interface today; it does not enable real delivery or durable background processing.
+
 Import persistence must store only normalized patient records and import counts. Raw pasted CSV is never stored.
 
 Production dashboard routes must not substitute demo patient or recall records when persistence is unavailable. Demo fallbacks are only for explicitly enabled local development demo auth; production should fail closed or return an unavailable state without tenant-owned data.
@@ -103,6 +105,7 @@ Production dashboard routes must not substitute demo patient or recall records w
 - GitHub CI should run lint, typecheck, formatting checks, Prisma validation, build, and high-severity dependency audit.
 - `npm run tenant:validate` statically checks tenant security guardrails without requiring a live database.
 - `npm run rls:validate` statically checks RLS readiness documentation and obvious schema guardrails without requiring a live database.
+- `npm run jobs:validate` statically checks the worker/queue interface, known job names, no provider calls, and job metadata safety guardrails.
 - CodeQL, Semgrep, and secret scanning are configured as baseline workflows.
 - Dependabot should open weekly grouped updates for npm and GitHub Actions.
 - Branch protection should require CI, review, and security-sensitive owner review before production use.

@@ -17,6 +17,8 @@ The recall MVP adds the first operational wedge inside DentalOS: a prioritized q
 
 The UI uses masked patient labels and does not send messages. That is intentional until worker boundaries and notification provider adapters exist.
 
+`src/server/jobs` now documents the future `recall_campaign.prepare`, `recall_campaign.validate_audience`, `notification.prepare_batch`, and `notification.dispatch_placeholder` boundaries. The recall UI and server actions do not enqueue real jobs yet.
+
 ## Product Rules
 
 - Overdue patients rank above due-soon patients.
@@ -33,7 +35,7 @@ The UI uses masked patient labels and does not send messages. That is intentiona
 
 ## Next Implementation Steps
 
-1. Add worker-backed preparation for large audiences.
-2. Add notification provider adapters only after the no-send approval workflow is validated.
+1. Wire reviewed worker-backed preparation for large audiences through `src/server/jobs`.
+2. Add notification provider adapters only after the no-send approval workflow and worker retry model are validated.
 3. Add delivery audit events and operational dashboards without message bodies or patient contact details.
 4. Add approval return-to-draft or reviewer notes if clinic workflow feedback shows it is needed.

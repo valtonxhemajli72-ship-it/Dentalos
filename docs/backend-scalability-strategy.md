@@ -39,6 +39,7 @@ Current implementation:
 - Tenant helpers under `src/modules/tenants`.
 - Prisma access through repository functions that include tenant context.
 - Dependency-free server interfaces under `src/server` for workflows, events, jobs, observability, policy, feature flags, metering, audit, and database access.
+- The first job boundary lives in `src/server/jobs` with tenant-aware payload types, a no-op queue client, an inline development client for explicit local experiments, safety helpers, and registry metadata.
 - PostgreSQL planned as the shared tenant database.
 - No Redis, queue worker, dedicated API, Temporal, Kafka, ClickHouse, OPA, Unleash, OpenMeter, Prometheus, Grafana, SMS/email/WhatsApp delivery, payment, or real AI provider integration is installed.
 
@@ -111,6 +112,8 @@ Introduce a worker process when a feature needs one or more of these:
 - Work risks exhausting request timeouts or database connections.
 
 Likely first worker candidates are patient import persistence, recall campaign preparation, notification scheduling, report generation, tenant onboarding, and tenant offboarding.
+
+The current `src/server/jobs` implementation is an interface only. It validates tenant context, idempotency keys, and safe metadata, but it does not enqueue durable work or imply that background processing has happened.
 
 ## When To Introduce Redis
 

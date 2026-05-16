@@ -273,6 +273,8 @@ export async function approveRecallCampaignAction(
         status: campaign.status,
       }),
     );
+    // Future worker boundary: enqueue recall_campaign.prepare only after reviewed workers exist.
+    // The payload must be tenantId, actorUserId, campaignId, and idempotencyKey only.
 
     redirectTo = `/dashboard/recall/campaigns/${campaign.id}?approved=1`;
   } catch (error) {

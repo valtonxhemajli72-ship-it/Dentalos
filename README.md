@@ -36,6 +36,7 @@ Klinika360 should grow into an enterprise-grade platform without installing heav
 - Feature flags: Unleash later, behind `src/server/feature-flags`.
 - Usage metering: OpenMeter later, behind `src/server/metering`.
 - Observability: Prometheus, Grafana, and OpenTelemetry later, behind `src/server/observability`.
+- Jobs and queues: Redis, SQS, EventBridge, or worker runtimes later, behind `src/server/jobs`.
 - Runtime security and secrets: Falco, cert-manager, and External Secrets Operator later if Kubernetes becomes the deployment platform.
 
 These services are planned, not installed. The current implementation is dependency-free and no-op/local by default.
@@ -128,6 +129,7 @@ Optional integration placeholders:
 - `npm run tenant:validate` - run dependency-free tenant security guardrail checks.
 - `npm run rls:validate` - run dependency-free RLS readiness documentation and schema guardrail checks.
 - `npm run campaign:validate` - run dependency-free recall campaign builder and approval guardrail checks.
+- `npm run jobs:validate` - run dependency-free worker/queue interface and job payload safety checks.
 - `npm run dev:db` - start the local PostgreSQL service with Docker Compose.
 - `npm run db:migrate` - apply Prisma migrations to the configured database.
 - `npm run db:generate` - generate Prisma Client.
@@ -156,6 +158,8 @@ The current patient import workflow helps a clinic paste a CSV, validate rows, p
 
 The recall campaign builder at `/dashboard/recall/campaigns/new` creates tenant-owned DRAFT campaigns from validated recall candidates. Campaign detail pages let authorized clinic staff edit generic draft templates, submit campaigns for review, approve readiness, or cancel records without sending messages. It supports SMS, email, WhatsApp, and manual-call placeholders as no-send planning channels only. Selected patients are revalidated against the current tenant before persistence, campaign status changes require explicit permissions, and audit metadata stores counts, status, channel, campaign IDs, and flags only.
 
+The worker and queue foundation under `src/server/jobs` defines tenant-aware job payloads, idempotency keys, safe metadata rules, registry metadata, and no-op/inline development queue clients. It does not add Redis, SQS, EventBridge, Temporal, deployed workers, or real notification delivery.
+
 See:
 
 - `docs/architecture.md`
@@ -168,6 +172,7 @@ See:
 - `docs/recall-mvp.md`
 - `docs/backend-scalability-strategy.md`
 - `docs/backend-boundary-checklist.md`
+- `docs/worker-queue-interface.md`
 - `docs/rls-readiness.md`
 - `docs/security.md`
 - `docs/enterprise-readiness.md`

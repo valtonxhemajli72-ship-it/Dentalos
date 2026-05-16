@@ -15,6 +15,7 @@ This roadmap preserves enterprise architecture decisions without installing heav
 - PostgreSQL RLS is documented as a future defense-in-depth layer and is not enabled yet.
 - Patient import, patient list, and recall review use tenant-scoped persistence when a database is configured.
 - Recall campaign builder and approval foundation saves no-send DRAFT, IN_REVIEW, APPROVED, and CANCELLED campaigns from tenant-validated recall candidates.
+- A dependency-free worker and queue interface exists under `src/server/jobs` for future tenant-aware jobs, with no durable queue runtime or provider dispatch enabled.
 - Local/demo mode can fall back safely when database access is unavailable.
 - A NextAuth/Auth.js-compatible auth and RBAC boundary exists with Google OAuth as the first real provider path.
 - Tenant switching, staff invitation records, and invitation acceptance exist without email delivery.
@@ -42,7 +43,7 @@ These are planned capabilities, not active dependencies or deployed services.
 
 - Documentation and architecture decision records.
 - Dependency-free TypeScript ports under `src/server`.
-- No-op or local implementations for workflows, events, policy, feature flags, metering, and observability.
+- No-op or local implementations for jobs, workflows, events, policy, feature flags, metering, and observability.
 - Clear guidance that product modules must use internal interfaces instead of direct vendor calls.
 
 ## What We Implement Later
@@ -109,7 +110,8 @@ PgBouncer or another connection pooling strategy may be needed as tenant count a
 ## Workflow Roadmap
 
 - Now: synchronous domain logic and no-op workflow client interfaces.
-- Next: in-process jobs for short tasks with tenant context and idempotency keys.
+- Now: dependency-free job interfaces with tenant context, idempotency keys, no-PII metadata rules, and no-op/inline development clients.
+- Next: reviewed in-process jobs for short tasks when they need progress and retry shape but not durable infrastructure.
 - Later: Temporal for durable workflows such as tenant onboarding, tenant offboarding, recall campaign sequences, integration syncs, and deletion/anonymization workflows.
 
 ## Eventing, CDC, And Analytics Roadmap
@@ -200,5 +202,5 @@ Offboarding is not implemented yet.
 - Regional infrastructure boundaries.
 - Tenant onboarding/offboarding automation.
 - SLA dashboards or promised SLA tiers.
-- Redis, queues, workers, a dedicated backend API, or API gateway.
+- Redis, durable queues, deployed workers, a dedicated backend API, or API gateway.
 - Real SMS, email, WhatsApp, payment, password auth, SSO/SAML, or OpenAI calls.

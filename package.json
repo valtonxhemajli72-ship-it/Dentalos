@@ -18,6 +18,7 @@
     "tenant:validate": "node scripts/validate-tenant-security.mjs",
     "rls:validate": "node scripts/validate-rls-readiness.mjs",
     "campaign:validate": "node scripts/validate-recall-campaigns.mjs",
+    "jobs:validate": "node scripts/validate-worker-queue-interface.mjs",
     "dev:db": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",

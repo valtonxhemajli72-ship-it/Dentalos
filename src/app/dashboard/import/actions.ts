@@ -194,6 +194,8 @@ export async function persistPatientImportAction(
         },
       });
 
+      // Future worker boundary: move large imports to patient_import.process with tenantId,
+      // batch.id, counts, and an idempotencyKey only; never raw CSV or contact values.
       const createResult =
         validRowsForCreation.length > 0
           ? await createPatientsForTenant(tenant.tenantId, validRowsForCreation, tenant.userId, {
