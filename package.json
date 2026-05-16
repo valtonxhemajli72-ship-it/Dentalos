@@ -13,6 +13,8 @@
     "auth:validate": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-auth-rbac.mjs",
     "invitation:validate": "node scripts/validate-invitation-acceptance.mjs",
     "runtime:validate": "node scripts/validate-local-runtime.mjs",
+    "bootstrap:admin": "node scripts/bootstrap-first-admin.mjs",
+    "bootstrap:validate": "node scripts/validate-bootstrap-admin.mjs",
     "dev:db": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",

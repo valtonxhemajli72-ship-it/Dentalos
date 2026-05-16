@@ -52,6 +52,29 @@ Seed fake demo data:
 npm run db:seed
 ```
 
+Optionally bootstrap a first real-style clinic owner in a local database. This is separate from fake demo seed data:
+
+```bash
+SETUP_BOOTSTRAP_SECRET="local-dev-secret" \
+BOOTSTRAP_SECRET="local-dev-secret" \
+BOOTSTRAP_TENANT_NAME="Klinika360 Demo Clinic" \
+BOOTSTRAP_OWNER_EMAIL="owner@example.test" \
+BOOTSTRAP_OWNER_NAME="Demo Owner" \
+npm run bootstrap:admin
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:SETUP_BOOTSTRAP_SECRET="local-dev-secret"
+$env:BOOTSTRAP_SECRET="local-dev-secret"
+$env:BOOTSTRAP_TENANT_NAME="Klinika360 Demo Clinic"
+$env:BOOTSTRAP_OWNER_EMAIL="owner@example.test"
+$env:BOOTSTRAP_OWNER_NAME="Demo Owner"
+npm run bootstrap:admin
+Remove-Item Env:\BOOTSTRAP_SECRET
+```
+
 Start the app:
 
 ```bash
@@ -113,6 +136,8 @@ If the dashboard shows no tenant membership, rerun:
 ```bash
 npm run db:seed
 ```
+
+If you are testing Google OAuth with the bootstrap owner instead of demo auth, sign in with the same email as `BOOTSTRAP_OWNER_EMAIL`. The deterministic demo auth user remains `demo-user@example.test`; the bootstrap owner example is `owner@example.test`.
 
 If Docker says the database is still starting, wait for the healthcheck or inspect:
 

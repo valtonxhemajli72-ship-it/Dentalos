@@ -69,14 +69,21 @@ enum TenantInvitationStatus {
   EXPIRED
 }
 
+enum TenantSetupStatus {
+  PENDING
+  BOOTSTRAPPED
+}
+
 model Tenant {
-  id          String             @id @default(cuid())
-  name        String
-  slug        String             @unique
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  memberships Membership[]
-  invitations TenantInvitation[]
+  id               String             @id @default(cuid())
+  name             String
+  slug             String             @unique
+  setupStatus      TenantSetupStatus  @default(PENDING)
+  setupCompletedAt DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  memberships      Membership[]
+  invitations      TenantInvitation[]
 
   patients      Patient[]
   appointments  Appointment[]
@@ -84,6 +91,8 @@ model Tenant {
   messages      NotificationMessage[]
   auditLogs     AuditLog[]
   importBatches PatientImportBatch[]
+
+  @@index([setupStatus])
 }
 
 model User {

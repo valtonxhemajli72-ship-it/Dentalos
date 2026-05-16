@@ -22,6 +22,8 @@ Enterprise readiness means the product is secure, accessible, fast, reviewable, 
 
 The RBAC permission map exists in code and private dashboard flows use it before tenant data access. NextAuth with Google OAuth is wired as the first real provider path. Tenant switching, staff invitation records, and invitation acceptance are available as a foundation, while invitation email delivery is still deferred. Production auth fails safely when provider credentials or tenant memberships are missing.
 
+First clinic provisioning is available through a guarded CLI bootstrap only. It creates the initial tenant, owner user, owner membership, setup state, and safe audit events without creating a public signup path.
+
 ## Tenant Isolation Checklist
 
 - Resolve authenticated user and active tenant before tenant-owned data access.
@@ -43,6 +45,7 @@ The RBAC permission map exists in code and private dashboard flows use it before
 ## Production Hardening Checklist
 
 - Configure production Google OAuth credentials and a strong auth secret behind `src/server/auth`.
+- Run first clinic admin bootstrap only from a trusted operator environment with `SETUP_BOOTSTRAP_SECRET`, then remove or rotate the setup secret.
 - Add email delivery for invited clinic staff behind a reviewed notification adapter.
 - Keep invitation acceptance token validation, email match, tenant-derived membership creation, and no-PII audit metadata intact.
 - Keep route-level permission checks for doctors, receptionists, managers, and staff.

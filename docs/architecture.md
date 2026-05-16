@@ -36,6 +36,8 @@ docker compose up -d
 
 The seed creates tenant-owned records with explicit `tenantId`, stores only invitation token hashes, and writes audit metadata with counts and IDs only. This runtime is for local development and demo validation; staging and production database provisioning, backups, PITR, and connection pooling remain separate operational work.
 
+Real first-clinic provisioning uses the CLI-only admin bootstrap in `scripts/bootstrap-first-admin.mjs` and domain logic in `src/modules/tenants/bootstrap.ts`. It is not a route or server action. The bootstrap requires a matching setup secret, creates or reuses the tenant, owner user, owner membership, marks tenant setup as `BOOTSTRAPPED`, and records safe audit events.
+
 ## Request Flow
 
 ```text
@@ -51,6 +53,8 @@ RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages re
 Tenant switching stores the selected tenant ID in an HTTP-only cookie. The selected value is never trusted by itself; `resolveActiveTenantForUser` revalidates it against the authenticated user’s active memberships and falls back to the first valid membership when needed. Team management and staff invitations live in the tenants module. Invitation records store `tokenHash` only and do not send email yet.
 
 Invitation acceptance lives at `/invitations/accept`. The page requires authentication before validating the invitation token. The server action hashes the raw token, validates the invitation record, enforces invited-email match, derives tenant and role from the invitation, creates or reactivates the membership, marks the invitation accepted, switches the active tenant to the accepted tenant, and records safe audit events. Raw tokens are never persisted or logged, and `tokenHash` is never returned to the client.
+
+First owner bootstrap is intentionally operational rather than self-service. It creates the initial `User` and `Membership` needed for Google OAuth to resolve tenant context after sign-in, but it does not bypass the normal auth boundary for dashboard access.
 
 ## Backend Boundary
 
