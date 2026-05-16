@@ -13,6 +13,14 @@ Klinika360 uses `next-auth` as the first real authentication foundation. DentalO
 
 The app does not use the Prisma Auth.js adapter yet. OAuth identifies the user, then Klinika360 maps the provider email to an existing `User` row and resolves `Membership` records for tenant context.
 
+## First Clinic Admin Bootstrap
+
+Real first-clinic provisioning is handled by the CLI-only admin bootstrap, not by an open signup route. `npm run bootstrap:admin` requires a matching `BOOTSTRAP_SECRET` and `SETUP_BOOTSTRAP_SECRET`, then creates or reuses the first `Tenant`, first owner `User`, `OWNER` `Membership`, tenant setup state, and safe audit events.
+
+The bootstrap owner must sign in with the same Google OAuth email as `BOOTSTRAP_OWNER_EMAIL`. OAuth still only identifies the user; tenant access is granted because the bootstrap has already created the matching `User` and active `Membership`.
+
+See `docs/admin-bootstrap.md` for local, staging, and production handling. Remove or rotate the setup secret after the one-off bootstrap run.
+
 ## Required Environment Variables
 
 Production auth requires:

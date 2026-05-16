@@ -70,6 +70,14 @@ npm run dev
 
 On Windows PowerShell, use `Copy-Item .env.example .env.local` for the copy step.
 
+For a real first clinic in a controlled local or staging database, use the CLI-only admin bootstrap instead of demo seed data:
+
+```bash
+SETUP_BOOTSTRAP_SECRET="local-dev-secret" BOOTSTRAP_SECRET="local-dev-secret" BOOTSTRAP_TENANT_NAME="Klinika360 Demo Clinic" BOOTSTRAP_OWNER_EMAIL="owner@example.test" BOOTSTRAP_OWNER_NAME="Demo Owner" npm run bootstrap:admin
+```
+
+See `docs/admin-bootstrap.md` before using this outside a disposable local database.
+
 Start only the development server:
 
 ```bash
@@ -95,6 +103,7 @@ Required later for database-backed work:
 - `NEXTAUTH_URL`
 - `NEXTAUTH_SECRET`
 - `NEXT_PUBLIC_APP_URL`
+- `SETUP_BOOTSTRAP_SECRET` for controlled one-off first clinic bootstrap only
 
 Optional integration placeholders:
 
@@ -114,6 +123,8 @@ Optional integration placeholders:
 - `npm run auth:validate` - run dependency-free RBAC mapping checks.
 - `npm run invitation:validate` - run dependency-free invitation acceptance guardrail checks.
 - `npm run runtime:validate` - run dependency-free local runtime setup guardrail checks.
+- `npm run bootstrap:admin` - run the guarded first clinic admin bootstrap CLI.
+- `npm run bootstrap:validate` - run dependency-free admin bootstrap guardrail checks.
 - `npm run dev:db` - start the local PostgreSQL service with Docker Compose.
 - `npm run db:migrate` - apply Prisma migrations to the configured database.
 - `npm run db:generate` - generate Prisma Client.
@@ -132,6 +143,8 @@ The MVP tenancy model is a shared app and shared PostgreSQL database. Every tena
 
 Auth uses `next-auth` with Google OAuth as the first real provider path when `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, and `AUTH_SECRET` are configured. OAuth sessions map by email to an existing `User`, then to `Membership`, then to tenant context. Development demo auth requires `DEMO_AUTH_ENABLED="true"` and is ignored in production. Permissions are defined in `src/server/auth/permissions.ts` and cover patients, recall, campaigns, notifications, settings, audit, users, and billing read access.
 
+First clinic creation is intentionally CLI-only through `npm run bootstrap:admin`. It requires a matching setup secret, creates or reuses the tenant, owner user, `OWNER` membership, tenant setup state, and no-PII audit events, then should be disabled by removing or rotating the setup secret.
+
 Tenant switching is backed by validated memberships. When a user has multiple memberships, the selected tenant is stored in an HTTP-only cookie and revalidated against the user’s memberships on every request. Team access management starts at `/dashboard/settings/team`; Owner/Admin users can create or revoke invitation records and update non-owner roles. No invitation email is sent yet, and only invitation token hashes are stored.
 
 Invitation acceptance is available at `/invitations/accept?token=...`. The accepting user must authenticate with the invited email address; the server hashes and validates the token, derives tenant and role from the invitation record, creates or reuses a tenant membership safely, and records audit events without raw tokens, token hashes, or email addresses in metadata.
@@ -142,6 +155,7 @@ See:
 
 - `docs/architecture.md`
 - `docs/auth.md`
+- `docs/admin-bootstrap.md`
 - `docs/local-development.md`
 - `docs/database-runtime.md`
 - `docs/patient-import.md`

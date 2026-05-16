@@ -49,6 +49,14 @@ npm run db:validate
 
 Seed data is fake and uses `.test` email addresses plus synthetic phone numbers. Do not replace seed data with real clinic, staff, or patient data.
 
+## First Clinic Admin Bootstrap
+
+`npm run bootstrap:admin` is a separate one-off CLI for creating the minimum real clinic foundation in a controlled database. It creates or reuses one tenant, one owner user, one active `OWNER` membership, marks the tenant setup state as `BOOTSTRAPPED`, and writes safe audit records with IDs, statuses, and created/reused flags only.
+
+The bootstrap requires `SETUP_BOOTSTRAP_SECRET` to match runtime `BOOTSTRAP_SECRET`, unless `NODE_ENV="development"` and `BOOTSTRAP_ALLOW_INSECURE_LOCAL="true"` are explicitly set for a disposable local database. Do not run it against an unknown database, and remove or rotate the setup secret after first use outside local development.
+
+This differs from `npm run db:seed`: seed data is fake workflow data for local demos, while bootstrap is the narrow first-owner provisioning path for a real clinic environment.
+
 ## Safety Rules
 
 - Do not commit `.env`, `.env.local`, database dumps, or real credentials.

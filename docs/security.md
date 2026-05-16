@@ -12,6 +12,8 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Do not print or paste `.env` values in logs, issues, commits, or chat.
 - Rotate any secret that is accidentally committed or exposed.
 - Use least-privilege provider keys when integrations are introduced.
+- First clinic admin bootstrap must remain CLI-only, require a matching setup secret, and never expose a production route or public signup path.
+- Remove or rotate `SETUP_BOOTSTRAP_SECRET` after the controlled bootstrap run.
 
 ## PII Logging Rules
 
@@ -52,6 +54,7 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Invitation acceptance requires an authenticated user whose email matches the invited email. Mismatch, expired, revoked, already accepted, invalid, and Owner-role invitations fail safely.
 - Invitation acceptance audit metadata must contain statuses, roles, IDs, booleans, or reasons only; it must not contain raw tokens, token hashes, raw email addresses, sessions, or provider payloads.
 - Role changes and deactivation must preserve at least one active owner for every tenant.
+- The first clinic admin bootstrap creates or reuses one owner membership only when the tenant has no different active owner; it refuses ambiguous owner state instead of silently changing roles.
 
 ## Audit Log Strategy
 
@@ -67,6 +70,8 @@ Audit records should capture:
 Audit logs should cover authentication-sensitive actions, membership changes, exports, notification sends, AI-assisted actions, and billing events.
 
 Patient import audit metadata must use counts and identifiers only, such as row counts, valid row counts, invalid row counts, and import batch IDs. Do not store raw names, emails, phone numbers, notes, message bodies, or CSV content in audit metadata.
+
+Admin bootstrap audit metadata must use tenant IDs, user IDs, membership IDs, statuses, and created/reused flags only. It must not include setup secrets, owner email addresses, owner names, raw environment values, sessions, provider payloads, or database connection strings.
 
 Import persistence must store only normalized patient records and import counts. Raw pasted CSV is never stored.
 

@@ -16,6 +16,9 @@ export type AuditAction =
   | "rbac.permission_denied"
   | "tenant.context.resolved"
   | "tenant.context_failed"
+  | "tenant.bootstrap_started"
+  | "tenant.bootstrap_completed"
+  | "tenant.bootstrap_failed"
   | "tenant.membership.resolved"
   | "tenant.membership_missing"
   | "tenant.switched"
@@ -30,6 +33,7 @@ export type AuditAction =
   | "invitation.accept_email_mismatch"
   | "invitation.expired"
   | "membership.created_from_invitation"
+  | "membership.owner_bootstrapped"
   | "membership.role_updated"
   | "membership.deactivated"
   | "membership.last_owner_protection_triggered"
@@ -513,6 +517,91 @@ export function createTenantContextFailedAuditEvent(
     entityType: "Tenant",
     entityId: tenant.tenantId,
     metadata,
+  });
+}
+
+export function createTenantBootstrapStartedAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  metadata: {
+    tenantId: string;
+    userId: string;
+    status: "started";
+    tenantCreated: boolean;
+    userCreated: boolean;
+  };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "tenant.bootstrap_started",
+    entityType: "Tenant",
+    entityId: input.tenantId,
+    metadata: input.metadata,
+  });
+}
+
+export function createTenantBootstrapCompletedAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  membershipId: string;
+  metadata: {
+    tenantId: string;
+    userId: string;
+    membershipId: string;
+    status: "completed";
+    tenantCreated: boolean;
+    userCreated: boolean;
+    membershipCreated: boolean;
+    membershipReactivated: boolean;
+    setupStateChanged: boolean;
+  };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "tenant.bootstrap_completed",
+    entityType: "Tenant",
+    entityId: input.tenantId,
+    metadata: input.metadata,
+  });
+}
+
+export function createTenantBootstrapFailedAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  metadata: { tenantId: string; status: "failed"; reason: string };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "tenant.bootstrap_failed",
+    entityType: "Tenant",
+    entityId: input.tenantId,
+    metadata: input.metadata,
+  });
+}
+
+export function createMembershipOwnerBootstrappedAuditEvent(input: {
+  tenantId: string;
+  actorUserId?: string;
+  membershipId: string;
+  metadata: {
+    tenantId: string;
+    userId: string;
+    membershipId: string;
+    status: "active";
+    membershipCreated: boolean;
+    membershipReactivated: boolean;
+  };
+}): AuditEvent {
+  return createAuditEventForTenant({
+    tenantId: input.tenantId,
+    actorUserId: input.actorUserId,
+    action: "membership.owner_bootstrapped",
+    entityType: "Membership",
+    entityId: input.membershipId,
+    metadata: input.metadata,
   });
 }
 

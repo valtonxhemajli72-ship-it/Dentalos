@@ -12,11 +12,15 @@ const tenants = [
     id: primaryTenantId,
     name: "Klinika360",
     slug: "klinika360-demo",
+    setupStatus: "BOOTSTRAPPED",
+    setupCompletedAt: new Date("2026-05-15T00:00:00.000Z"),
   },
   {
     id: specialistsTenantId,
     name: "Klinika360 Specialists",
     slug: "klinika360-specialists-demo",
+    setupStatus: "BOOTSTRAPPED",
+    setupCompletedAt: new Date("2026-05-15T00:00:00.000Z"),
   },
 ];
 
