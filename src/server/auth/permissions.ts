@@ -84,7 +84,7 @@ const rolePermissions: Record<TenantRole, readonly Permission[]> = {
     "membership:deactivate",
     "billing:read",
   ],
-  DOCTOR: ["patient:read", "patient:update", "recall:read", "campaign:prepare", "tenant:switch"],
+  DOCTOR: ["patient:read", "patient:update", "recall:read", "tenant:switch"],
   RECEPTIONIST: [
     "patient:read",
     "patient:create",
@@ -109,7 +109,7 @@ const rolePermissions: Record<TenantRole, readonly Permission[]> = {
     "audit:read",
     "billing:read",
   ],
-  CLINICIAN: ["patient:read", "patient:update", "recall:read", "campaign:prepare", "tenant:switch"],
+  CLINICIAN: ["patient:read", "patient:update", "recall:read", "tenant:switch"],
   STAFF: ["patient:read", "recall:read", "notification:read", "tenant:switch"],
 };
 

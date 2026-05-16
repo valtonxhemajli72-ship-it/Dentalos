@@ -52,6 +52,8 @@ NextAuth provides the first real authentication provider boundary through Google
 
 RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages require `patient:read`, patient import pages and actions require `patient:import`, recall pages require `recall:read`, and campaign preparation placeholders check `campaign:prepare`.
 
+The recall campaign builder creates tenant-owned DRAFT records through `src/modules/recall`. It validates selected recall candidates against the active tenant before writing `RecallCampaign` and `RecallCampaignPatient` records. Channel selection is a no-send placeholder for SMS, email, WhatsApp, or manual-call planning; outbound delivery remains deferred to future approval, job, and provider adapter boundaries.
+
 Tenant switching stores the selected tenant ID in an HTTP-only cookie. The selected value is never trusted by itself; `resolveActiveTenantForUser` revalidates it against the authenticated user’s active memberships and falls back to the first valid membership when needed. Team management and staff invitations live in the tenants module. Invitation records store `tokenHash` only and do not send email yet.
 
 Tenant switching requires the `tenant:switch` permission before processing the requested tenant ID, and the requested tenant still must be present in the authenticated user's active memberships before the cookie changes.
@@ -157,6 +159,7 @@ Start simple:
 - Patient import stores import batch counts and status only; raw CSV content and unnecessary PII are not stored in import metadata.
 - Patient import persistence writes patients, optional appointments, import batch counts, and safe audit events in a tenant-scoped transaction.
 - Patient duplicate lookups use tenant-scoped indexes for email, phone, and name plus last visit date. These indexes support lookup speed and do not create global uniqueness constraints.
+- Recall campaign draft creation is request-bound for the foundation only. Actual sending, retries, rate limits, and provider callbacks should move to workers and notification adapters before production delivery.
 
 Later:
 

@@ -53,6 +53,8 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Patient import persistence requires `patient:import`.
 - Patient lists require `patient:read`.
 - Recall review requires `recall:read`; campaign preparation requires `campaign:prepare`.
+- Recall campaign draft creation requires authenticated tenant context, `campaign:prepare`, and server-side validation that every selected patient belongs to the active tenant and is a current recall candidate.
+- Recall campaign builder channels are no-send placeholders only. Do not add SMS, email, WhatsApp, or phone delivery without a reviewed provider adapter, approval flow, worker/retry plan, and no-PII observability.
 - Session and tenant switching should be auditable when implemented.
 - Staff invitations store token hashes only. Raw invitation tokens must never be logged, audited, or persisted.
 - Invitation acceptance hashes raw tokens server-side, uses timing-safe token verification, never exposes token hashes to the client, and never trusts tenant IDs or roles from the client.
@@ -75,6 +77,8 @@ Audit records should capture:
 Audit logs should cover authentication-sensitive actions, membership changes, exports, notification sends, AI-assisted actions, and billing events.
 
 Patient import audit metadata must use counts and identifiers only, such as row counts, valid row counts, invalid row counts, and import batch IDs. Do not store raw names, emails, phone numbers, notes, message bodies, or CSV content in audit metadata.
+
+Recall campaign audit metadata must use counts, campaign IDs, status, and channel only. Do not store selected patient names, patient emails, patient phones, raw message bodies, or full patient ID lists in audit metadata.
 
 Admin bootstrap audit metadata must use tenant IDs, user IDs, membership IDs, statuses, and created/reused flags only. It must not include setup secrets, owner email addresses, owner names, raw environment values, sessions, provider payloads, or database connection strings.
 

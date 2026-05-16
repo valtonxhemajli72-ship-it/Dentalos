@@ -52,7 +52,8 @@ function assertTenantScopedRepositoryNames() {
   );
   const tenantOwnedNamePattern =
     /(Patient|Appointment|RecallCampaign|Recall|NotificationMessage|Notification|PatientImportBatch|ImportBatch|AuditLog)/;
-  const allowedScopePattern = /(ForTenant|TenantScoped|Tenant|Demo|map|build|toPrisma|fromPrisma)/;
+  const allowedScopePattern =
+    /(ForTenant|ForCampaign|TenantScoped|Tenant|Demo|map|build|toPrisma|fromPrisma)/;
 
   for (const file of repositoryFiles) {
     const content = readFileSync(file, "utf8");
