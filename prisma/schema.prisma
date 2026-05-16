@@ -174,6 +174,9 @@ model Patient {
   notificationMessages   NotificationMessage[]
 
   @@index([tenantId, lastName, firstName])
+  @@index([tenantId, email])
+  @@index([tenantId, phone])
+  @@index([tenantId, firstName, lastName, lastVisitAt])
   @@index([tenantId, nextRecallDueAt])
   @@index([tenantId, lastRecallContactedAt])
 }

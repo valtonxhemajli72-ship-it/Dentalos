@@ -32,17 +32,17 @@ export async function acceptInvitationAction(
   _previousState: AcceptInvitationActionState,
   formData: FormData,
 ): Promise<AcceptInvitationActionState> {
-  const rawInvitationToken = String(formData.get("token") ?? "");
-
-  if (!rawInvitationToken.trim()) {
-    return {
-      status: "invalid",
-      message: "This invitation link is invalid or no longer available.",
-    };
-  }
-
   try {
     const user = await requireCurrentUser();
+    const rawInvitationToken = String(formData.get("token") ?? "");
+
+    if (!rawInvitationToken.trim()) {
+      return {
+        status: "invalid",
+        message: "This invitation link is invalid or no longer available.",
+      };
+    }
+
     const result = await acceptTenantInvitation({
       rawInvitationToken,
       authenticatedUser: {

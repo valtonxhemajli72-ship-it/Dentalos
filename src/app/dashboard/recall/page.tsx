@@ -27,7 +27,7 @@ import {
 } from "@/server/auth";
 import { roleHasPermission } from "@/server/auth/permissions";
 import { createRecallCandidatesViewedAuditEvent, writeAuditEvent } from "@/server/audit";
-import { getPrismaClient } from "@/server/db";
+import { DatabaseUnavailableError, getPrismaClient } from "@/server/db";
 import type { PatientImportRepositoryDatabase } from "@/modules/patient-import/repository";
 import type { TenantContext } from "@/modules/tenants";
 
@@ -265,7 +265,7 @@ export default async function RecallDashboardPage() {
 type RecallPageData = {
   asOf: Date;
   candidates: Parameters<typeof buildRecallWorkspaceSnapshot>[0];
-  source: "database" | "demo";
+  source: "database" | "demo" | "unavailable";
   tenantName: string;
   importReadiness: {
     status: string;
@@ -320,7 +320,26 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
             invalidRowCount: 0,
           },
     };
-  } catch {
+  } catch (error) {
+    if (!canUseDemoFallback(tenant)) {
+      if (error instanceof DatabaseUnavailableError) {
+        return {
+          asOf,
+          candidates: [],
+          source: "unavailable",
+          tenantName: tenant.tenantName ?? "Selected clinic",
+          importReadiness: {
+            status: "Unavailable",
+            rowCount: 0,
+            validRowCount: 0,
+            invalidRowCount: 0,
+          },
+        };
+      }
+
+      throw error;
+    }
+
     const demoPreview = createPatientImportClientPreview(patientImportExampleCsv);
     const candidates = listDemoRecallCandidatesForTenant(tenant.tenantId);
 
@@ -337,6 +356,10 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
       },
     };
   }
+}
+
+function canUseDemoFallback(tenant: TenantContext): boolean {
+  return isDevelopmentAuthEnabled() && isDemoTenantContext(tenant);
 }
 
 type MetricCardProps = {

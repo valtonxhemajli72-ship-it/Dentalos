@@ -15,6 +15,7 @@
     "runtime:validate": "node scripts/validate-local-runtime.mjs",
     "bootstrap:admin": "node scripts/bootstrap-first-admin.mjs",
     "bootstrap:validate": "node scripts/validate-bootstrap-admin.mjs",
+    "tenant:validate": "node scripts/validate-tenant-security.mjs",
     "dev:db": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",

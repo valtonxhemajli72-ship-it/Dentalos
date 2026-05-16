@@ -30,7 +30,7 @@ type MembershipRepositoryDatabase = {
   membership: {
     findMany(args: Record<string, unknown>): Promise<MembershipRecord[]>;
     findFirst(args: Record<string, unknown>): Promise<MembershipRecord | null>;
-    update(args: Record<string, unknown>): Promise<MembershipRecord>;
+    updateMany(args: Record<string, unknown>): Promise<{ count: number }>;
     count(args: Record<string, unknown>): Promise<number>;
   };
 };
@@ -47,6 +47,7 @@ export type TenantMembershipListItem = {
   userDisplayName: string;
   userEmailMasked: string;
   role: TenantRole;
+  previousRole?: TenantRole;
   createdAt?: Date;
   deactivatedAt?: Date | null;
 };
@@ -156,20 +157,24 @@ export async function updateMembershipRole(
     await assertTenantWillStillHaveOwner(db, tenantId);
   }
 
-  const updated = await db.membership.update({
+  const previousRole = target.role;
+  const updateResult = await db.membership.updateMany({
     where: {
       id: membershipId,
+      tenantId,
+      deactivatedAt: null,
     },
     data: {
       role,
     },
-    include: {
-      user: true,
-      tenant: true,
-    },
   });
+  assertSingleTenantMutation(updateResult.count);
 
-  return mapMembershipRecordToListItem(updated);
+  const updated = await requireMembershipRecordForTenant(db, tenantId, membershipId);
+  return {
+    ...mapMembershipRecordToListItem(updated),
+    previousRole,
+  };
 }
 
 export async function deactivateMembership(
@@ -194,19 +199,21 @@ export async function deactivateMembership(
     await assertTenantWillStillHaveOwner(db, tenantId);
   }
 
-  const updated = await db.membership.update({
+  const updateResult = await db.membership.updateMany({
     where: {
       id: membershipId,
+      tenantId,
+      deactivatedAt: null,
     },
     data: {
       deactivatedAt: new Date(),
     },
-    include: {
-      user: true,
-      tenant: true,
-    },
   });
+  assertSingleTenantMutation(updateResult.count);
 
+  const updated = await requireMembershipRecordForTenant(db, tenantId, membershipId, {
+    includeDeactivated: true,
+  });
   return mapMembershipRecordToListItem(updated);
 }
 
@@ -226,12 +233,13 @@ async function requireMembershipRecordForTenant(
   db: MembershipRepositoryDatabase,
   tenantId: string,
   membershipId: string,
+  options: { includeDeactivated?: boolean } = {},
 ): Promise<MembershipRecord> {
   const membership = await db.membership.findFirst({
     where: {
       id: membershipId,
       tenantId,
-      deactivatedAt: null,
+      ...(options.includeDeactivated ? {} : { deactivatedAt: null }),
     },
     include: {
       user: true,
@@ -244,6 +252,12 @@ async function requireMembershipRecordForTenant(
   }
 
   return membership;
+}
+
+function assertSingleTenantMutation(count: number): void {
+  if (count !== 1) {
+    throw new Error("Tenant-scoped membership mutation did not update exactly one record.");
+  }
 }
 
 async function assertTenantWillStillHaveOwner(

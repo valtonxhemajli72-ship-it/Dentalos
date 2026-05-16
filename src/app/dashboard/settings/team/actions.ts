@@ -70,7 +70,7 @@ export async function updateMemberRoleAction(formData: FormData): Promise<void> 
   const member = await updateMembershipRole(tenant.tenantId, membershipId, role, tenant);
   await tryWriteTeamAuditEvent(
     createMembershipRoleUpdatedAuditEvent(tenant, member.membershipId, {
-      previousRole: "unknown",
+      previousRole: member.previousRole ?? "unknown",
       nextRole: member.role,
     }),
   );

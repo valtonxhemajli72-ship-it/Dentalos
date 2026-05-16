@@ -43,6 +43,7 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Users access tenant data through memberships.
 - OAuth sessions map by email to an existing `User`; tenant access requires a matching `Membership`.
 - Active tenant selection is stored as a cookie but revalidated against membership records on every request.
+- Tenant switching requires the `tenant:switch` permission before the requested tenant ID from the form is processed.
 - Supported roles are owner, admin, doctor, receptionist, manager, and staff. `CLINICIAN` remains only as a legacy compatibility alias.
 - Check permissions before sensitive reads, imports, exports, message sends, campaign preparation, settings changes, audit reads, user management, or billing reads.
 - Patient import persistence requires `patient:import`.
@@ -73,7 +74,11 @@ Patient import audit metadata must use counts and identifiers only, such as row 
 
 Admin bootstrap audit metadata must use tenant IDs, user IDs, membership IDs, statuses, and created/reused flags only. It must not include setup secrets, owner email addresses, owner names, raw environment values, sessions, provider payloads, or database connection strings.
 
+Audit metadata guardrails reject unsafe keys such as raw names, emails, phones, notes, message bodies, CSV content, tokens, secrets, passwords, sessions, cookies, OAuth payloads, and credentials. Treat audit metadata as a strict allow-list of counts, statuses, IDs, roles, booleans, and non-sensitive reason codes.
+
 Import persistence must store only normalized patient records and import counts. Raw pasted CSV is never stored.
+
+Production dashboard routes must not substitute demo patient or recall records when persistence is unavailable. Demo fallbacks are only for explicitly enabled local development demo auth; production should fail closed or return an unavailable state without tenant-owned data.
 
 ## Local Database Runtime
 
@@ -86,6 +91,7 @@ Import persistence must store only normalized patient records and import counts.
 ## Dependency And Repository Security
 
 - GitHub CI should run lint, typecheck, formatting checks, Prisma validation, build, and high-severity dependency audit.
+- `npm run tenant:validate` statically checks tenant security guardrails without requiring a live database.
 - CodeQL, Semgrep, and secret scanning are configured as baseline workflows.
 - Dependabot should open weekly grouped updates for npm and GitHub Actions.
 - Branch protection should require CI, review, and security-sensitive owner review before production use.

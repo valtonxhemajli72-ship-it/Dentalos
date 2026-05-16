@@ -52,7 +52,9 @@ RBAC permissions live in `src/server/auth/permissions.ts`. Patient list pages re
 
 Tenant switching stores the selected tenant ID in an HTTP-only cookie. The selected value is never trusted by itself; `resolveActiveTenantForUser` revalidates it against the authenticated user’s active memberships and falls back to the first valid membership when needed. Team management and staff invitations live in the tenants module. Invitation records store `tokenHash` only and do not send email yet.
 
-Invitation acceptance lives at `/invitations/accept`. The page requires authentication before validating the invitation token. The server action hashes the raw token, validates the invitation record, enforces invited-email match, derives tenant and role from the invitation, creates or reactivates the membership, marks the invitation accepted, switches the active tenant to the accepted tenant, and records safe audit events. Raw tokens are never persisted or logged, and `tokenHash` is never returned to the client.
+Tenant switching requires the `tenant:switch` permission before processing the requested tenant ID, and the requested tenant still must be present in the authenticated user's active memberships before the cookie changes.
+
+Invitation acceptance lives at `/invitations/accept`. The page requires authentication before validating the invitation token. The server action also authenticates before reading the raw token, hashes the raw token, validates the invitation record, enforces invited-email match, derives tenant and role from the invitation, creates or reactivates the membership, marks the invitation accepted, switches the active tenant to the accepted tenant, and records safe audit events. Raw tokens are never persisted or logged, and `tokenHash` is never returned to the client.
 
 First owner bootstrap is intentionally operational rather than self-service. It creates the initial `User` and `Membership` needed for Google OAuth to resolve tenant context after sign-in, but it does not bypass the normal auth boundary for dashboard access.
 
@@ -127,6 +129,7 @@ Job, event, and workflow payloads must carry tenant context explicitly and must 
 - Business logic buried inside page components instead of domain modules.
 - Long-running jobs inside server actions.
 - Tenant-owned queries without `tenantId`.
+- Production dashboard fallbacks that substitute demo tenant data when persistence fails.
 - Repository functions shaped like `getPatient(id)` for tenant-owned data.
 - Logs, metric labels, events, job payloads, workflow payloads, or audit metadata containing PII or secrets.
 - Provider SDK calls scattered through product modules.
@@ -151,6 +154,7 @@ Start simple:
 - External delivery adapters stay behind module boundaries.
 - Patient import stores import batch counts and status only; raw CSV content and unnecessary PII are not stored in import metadata.
 - Patient import persistence writes patients, optional appointments, import batch counts, and safe audit events in a tenant-scoped transaction.
+- Patient duplicate lookups use tenant-scoped indexes for email, phone, and name plus last visit date. These indexes support lookup speed and do not create global uniqueness constraints.
 
 Later:
 

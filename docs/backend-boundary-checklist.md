@@ -16,6 +16,7 @@ Use this checklist when a PR adds or changes backend behavior, server actions, r
 - Are repository names tenant-explicit, such as `listPatientsForTenant`?
 - Are client-supplied tenant IDs revalidated against membership and permission checks?
 - Does audit metadata contain counts, statuses, IDs, and flags only?
+- Are demo fallbacks restricted to explicit local development demo auth, with production using an unavailable state or failing closed?
 
 ## Request Lifecycle
 
@@ -40,6 +41,7 @@ Use this checklist when a PR adds or changes backend behavior, server actions, r
 - Is database access inside a tenant-scoped repository or server-only infrastructure boundary?
 - Are queries bounded with pagination, `take`, date windows, or status filters?
 - Are tenant-scoped indexes needed?
+- Do tenant-scoped updates and revocations include `tenantId` in the mutation filter, not only in a prior read?
 - Could this increase PostgreSQL connection pressure enough to require PgBouncer planning?
 
 ## Observability

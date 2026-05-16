@@ -199,16 +199,20 @@ export async function revokeTenantInvitation(
     throw new Error("Only pending invitations can be revoked.");
   }
 
-  const updated = await db.tenantInvitation.update({
+  const updateResult = await db.tenantInvitation.updateMany({
     where: {
       id: invitationId,
+      tenantId,
+      status: "PENDING",
     },
     data: {
       status: "REVOKED",
       revokedAt: new Date(),
     },
   });
+  assertSingleTenantMutation(updateResult.count);
 
+  const updated = await requireInvitationForTenant(db, tenantId, invitationId);
   return mapInvitationRecordToListItem(updated);
 }
 
@@ -551,6 +555,12 @@ async function requireInvitationForTenant(
   }
 
   return invitation;
+}
+
+function assertSingleTenantMutation(count: number): void {
+  if (count !== 1) {
+    throw new Error("Tenant-scoped invitation mutation did not update exactly one record.");
+  }
 }
 
 function assertRoleCanBeInvited(actorRole: TenantRole, invitedRole: TenantRole): void {

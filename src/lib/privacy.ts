@@ -4,7 +4,7 @@ export type AuditMetadataRecord = Record<string, AuditMetadataValue>;
 const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 const phonePattern = /(?:\+?\d[\d\s().-]{6,}\d)/;
 const unsafeMetadataKeyPattern =
-  /(firstName|lastName|fullName|name|email|phone|note|message|body|raw|csv|contactValue|address|dob|birth)/i;
+  /(firstName|lastName|fullName|name|email|phone|note|message|body|raw|csv|contactValue|address|dob|birth|token|secret|password|session|cookie|oauth|credential)/i;
 
 export function maskEmail(email: string): string {
   const [localPart, domain] = email.split("@");

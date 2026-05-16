@@ -34,6 +34,8 @@ prisma/dev.db
 .netlify/
 .cache/
 coverage/
+.agents/
+skills-lock.json
 
 # TypeScript
 *.tsbuildinfo

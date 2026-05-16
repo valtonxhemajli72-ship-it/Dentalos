@@ -125,6 +125,7 @@ Optional integration placeholders:
 - `npm run runtime:validate` - run dependency-free local runtime setup guardrail checks.
 - `npm run bootstrap:admin` - run the guarded first clinic admin bootstrap CLI.
 - `npm run bootstrap:validate` - run dependency-free admin bootstrap guardrail checks.
+- `npm run tenant:validate` - run dependency-free tenant security guardrail checks.
 - `npm run dev:db` - start the local PostgreSQL service with Docker Compose.
 - `npm run db:migrate` - apply Prisma migrations to the configured database.
 - `npm run db:generate` - generate Prisma Client.
@@ -190,6 +191,7 @@ Codex guardrail skills live under `.codex/skills`, with the recommended agent wo
 - Do not store raw CSV content in import batches or audit metadata.
 - Validate inputs at system boundaries.
 - Fail safely when tenant, permission, or validation context is missing.
+- Demo patient and recall fallbacks are local-development only and must be guarded by explicit demo auth.
 - Treat healthcare and dental data with heightened privacy expectations.
 - Target OWASP ASVS Level 2 as the application security baseline.
 - Target WCAG 2.2 AA for accessibility and Core Web Vitals for performance.

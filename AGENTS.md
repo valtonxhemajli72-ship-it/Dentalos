@@ -47,6 +47,7 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - No fetch, update, delete, list, import, export, event, or job operation for tenant-owned data may run without tenant context.
 - Patient imports create `PatientImportBatch` records with counts only; never store raw CSV content.
 - Private routes must resolve authenticated user and active tenant before accessing tenant data.
+- Production private routes must not fall back to demo patient or recall data when the database is unavailable.
 - Never trust tenant IDs from the client without checking membership and permissions.
 - Production dashboard access must fail closed until a real auth provider is configured.
 - NextAuth/Auth.js-compatible authentication is wired through `src/server/auth`; do not bypass it in product modules.
@@ -57,6 +58,7 @@ The product must feel serious for doctors, receptionists, clinic managers, admin
 - Invitation acceptance must require an authenticated user, validate the raw token server-side, enforce invited-email match, and create membership only for the tenant on the invitation record.
 - Do not allow role changes or membership deactivation that would remove the last active `OWNER`.
 - Server actions that write tenant-owned data must call `requirePermission()` before parsing or persisting input.
+- Tenant switching server actions must call `requirePermission("tenant:switch")` and then validate the requested tenant against active memberships.
 - Background jobs and event handlers must carry tenant context explicitly.
 - Cross-tenant admin workflows need explicit authorization and audit logs.
 
@@ -139,6 +141,7 @@ Tenant isolation roadmap:
 - Patient import tests should cover invalid dates, missing names, duplicate contacts, unsupported channels, and no PII in audit metadata.
 - Keep UI tests focused on important user workflows.
 - Run available checks before handoff: format, lint, typecheck, build, and Prisma validation when practical.
+- Run `npm run tenant:validate` after tenant isolation, auth/RBAC, server action, audit, invitation, or dashboard guardrail changes.
 - Accessibility target is WCAG 2.2 AA. Preserve labels, semantic HTML, visible focus, contrast, keyboard access, and readable tables.
 - Performance target is Core Web Vitals. Prefer server components, avoid large client bundles, and do not add heavy libraries without a real need.
 
