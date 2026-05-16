@@ -8,6 +8,8 @@ assertCampaignFilesExist();
 assertCampaignPermissionPolicy();
 assertCampaignSchemaShape();
 assertCampaignActionGuardrails();
+assertCampaignApprovalGuardrails();
+assertCampaignAuditGuardrails();
 assertNoOutboundDeliveryCode();
 assertDocsMentionNoSendBehavior();
 
@@ -31,6 +33,7 @@ function assertPackageScript() {
 function assertCampaignFilesExist() {
   for (const file of [
     "src/app/dashboard/recall/campaigns/new/page.tsx",
+    "src/app/dashboard/recall/campaigns/[campaignId]/page.tsx",
     "src/app/dashboard/recall/campaigns/actions.ts",
     "src/modules/recall/index.ts",
     "src/modules/recall/repository.ts",
@@ -48,16 +51,36 @@ function assertCampaignPermissionPolicy() {
     failures.push("campaign:prepare permission must exist");
   }
 
+  if (!permissions.includes('"campaign:approve"')) {
+    failures.push("campaign:approve permission must exist");
+  }
+
   if (!/RECEPTIONIST:\s*\[[^\]]*"campaign:prepare"/.test(permissions)) {
     failures.push("RECEPTIONIST should be able to prepare campaign drafts");
+  }
+
+  if (/RECEPTIONIST:\s*\[[^\]]*"campaign:approve"/.test(permissions)) {
+    failures.push("RECEPTIONIST should not approve campaign drafts by default");
+  }
+
+  if (!/MANAGER:\s*\[[^\]]*"campaign:approve"/.test(permissions)) {
+    failures.push("MANAGER should be able to approve campaign drafts");
   }
 
   if (/DOCTOR:\s*\[[^\]]*"campaign:prepare"/.test(permissions)) {
     failures.push("DOCTOR should not prepare campaign drafts by default");
   }
 
+  if (/DOCTOR:\s*\[[^\]]*"campaign:approve"/.test(permissions)) {
+    failures.push("DOCTOR should not approve campaign drafts by default");
+  }
+
   if (/STAFF:\s*\[[^\]]*"campaign:prepare"/.test(permissions)) {
     failures.push("STAFF should not prepare campaign drafts by default");
+  }
+
+  if (/STAFF:\s*\[[^\]]*"campaign:approve"/.test(permissions)) {
+    failures.push("STAFF should not approve campaign drafts by default");
   }
 }
 
@@ -74,6 +97,12 @@ function assertCampaignSchemaShape() {
   for (const field of ["tenantId", "channel", "audienceCount", "createdByUserId"]) {
     if (!new RegExp(`^\\s*${field}\\s+`, "m").test(campaign)) {
       failures.push(`RecallCampaign must include ${field}`);
+    }
+  }
+
+  for (const status of ["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED"]) {
+    if (!new RegExp(`^\\s*${status}\\s*$`, "m").test(schema)) {
+      failures.push(`RecallCampaignStatus must include ${status}`);
     }
   }
 
@@ -108,6 +137,74 @@ function assertCampaignActionGuardrails() {
 
   if (/formData\.get\(["']tenantId["']\)/.test(actions)) {
     failures.push("Campaign actions must not trust tenantId from form data");
+  }
+}
+
+function assertCampaignApprovalGuardrails() {
+  const actions = readFileSync("src/app/dashboard/recall/campaigns/actions.ts", "utf8");
+  const repository = readFileSync("src/modules/recall/repository.ts", "utf8");
+  const domain = readFileSync("src/modules/recall/index.ts", "utf8");
+
+  for (const actionName of [
+    "updateRecallCampaignDraftAction",
+    "submitRecallCampaignForReviewAction",
+    "approveRecallCampaignAction",
+    "cancelRecallCampaignAction",
+  ]) {
+    if (!actions.includes(actionName)) {
+      failures.push(`${actionName} must exist`);
+    }
+  }
+
+  if (!actions.includes('requirePermission("campaign:approve")')) {
+    failures.push("Approval action must require campaign:approve");
+  }
+
+  for (const repositoryName of [
+    "updateRecallCampaignDraftForTenant",
+    "submitRecallCampaignForTenantReview",
+    "approveRecallCampaignForTenant",
+    "cancelRecallCampaignForTenant",
+    "getRecallCampaignReviewStateForTenant",
+  ]) {
+    if (!repository.includes(repositoryName)) {
+      failures.push(`${repositoryName} must exist`);
+    }
+  }
+
+  if (
+    !repository.includes("createTenantScopedWhere(tenantId") &&
+    !repository.includes("createTenantScopedWhere(input.tenantId")
+  ) {
+    failures.push("Campaign repository transitions must use tenant-scoped where clauses");
+  }
+
+  if (!domain.includes("Only DRAFT") && !domain.includes("canEditCampaignDraft")) {
+    failures.push("Campaign domain must enforce DRAFT-only editing");
+  }
+}
+
+function assertCampaignAuditGuardrails() {
+  const audit = readFileSync("src/server/audit/index.ts", "utf8");
+
+  for (const action of [
+    "recall_campaign.draft_updated",
+    "recall_campaign.submitted_for_review",
+    "recall_campaign.approved",
+    "recall_campaign.cancelled",
+    "recall_campaign.approval_failed",
+    "recall_campaign.message_updated",
+  ]) {
+    if (!audit.includes(action)) {
+      failures.push(`${action} audit event must exist`);
+    }
+  }
+
+  const unsafeAuditMetadata =
+    /createRecallCampaign(?:DraftUpdated|MessageUpdated|SubmittedForReview|Approved|Cancelled|ApprovalFailed)AuditEvent[\s\S]*?metadata:\s*{[^}]*\b(messageTemplate|templatePreview|body|message)\b/i;
+
+  if (unsafeAuditMetadata.test(audit)) {
+    failures.push("Campaign audit metadata must not include raw message/template content");
   }
 }
 

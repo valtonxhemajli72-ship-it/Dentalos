@@ -9,6 +9,7 @@ export type Permission =
   | "recall:create"
   | "recall:update"
   | "campaign:prepare"
+  | "campaign:approve"
   | "notification:read"
   | "settings:read"
   | "settings:update"
@@ -44,6 +45,7 @@ const allPermissions = [
   "recall:create",
   "recall:update",
   "campaign:prepare",
+  "campaign:approve",
   "notification:read",
   "settings:read",
   "settings:update",
@@ -70,6 +72,7 @@ const rolePermissions: Record<TenantRole, readonly Permission[]> = {
     "recall:create",
     "recall:update",
     "campaign:prepare",
+    "campaign:approve",
     "notification:read",
     "settings:read",
     "settings:update",
@@ -101,6 +104,7 @@ const rolePermissions: Record<TenantRole, readonly Permission[]> = {
     "recall:create",
     "recall:update",
     "campaign:prepare",
+    "campaign:approve",
     "notification:read",
     "tenant:read",
     "tenant:switch",

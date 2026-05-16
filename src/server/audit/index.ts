@@ -47,7 +47,13 @@ export type AuditAction =
   | "recall_campaign.previewed"
   | "recall_campaign.audience_validated"
   | "recall_campaign.patient_selected"
-  | "recall_campaign.create_failed";
+  | "recall_campaign.create_failed"
+  | "recall_campaign.draft_updated"
+  | "recall_campaign.submitted_for_review"
+  | "recall_campaign.approved"
+  | "recall_campaign.cancelled"
+  | "recall_campaign.approval_failed"
+  | "recall_campaign.message_updated";
 
 export type AuditMetadata = Record<string, AuditMetadataValue>;
 
@@ -744,6 +750,88 @@ export function createRecallCampaignCreateFailedAuditEvent(
   return createAuditEvent({
     tenant,
     action: "recall_campaign.create_failed",
+    entityType: "RecallCampaign",
+    metadata,
+  });
+}
+
+export function createRecallCampaignDraftUpdatedAuditEvent(
+  tenant: TenantContext,
+  campaignId: string,
+  metadata: { audienceCount: number; status: string; channel: string; templateChanged: boolean },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.draft_updated",
+    entityType: "RecallCampaign",
+    entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignMessageUpdatedAuditEvent(
+  tenant: TenantContext,
+  campaignId: string,
+  metadata: { status: string; channel: string; templateChanged: boolean },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.message_updated",
+    entityType: "RecallCampaign",
+    entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignSubmittedForReviewAuditEvent(
+  tenant: TenantContext,
+  campaignId: string,
+  metadata: { audienceCount: number; status: string; channel: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.submitted_for_review",
+    entityType: "RecallCampaign",
+    entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignApprovedAuditEvent(
+  tenant: TenantContext,
+  campaignId: string,
+  metadata: { audienceCount: number; status: string; channel: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.approved",
+    entityType: "RecallCampaign",
+    entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignCancelledAuditEvent(
+  tenant: TenantContext,
+  campaignId: string,
+  metadata: { audienceCount: number; status: string; channel: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.cancelled",
+    entityType: "RecallCampaign",
+    entityId: campaignId,
+    metadata,
+  });
+}
+
+export function createRecallCampaignApprovalFailedAuditEvent(
+  tenant: TenantContext,
+  metadata: { reason: string; status: string },
+): AuditEvent {
+  return createAuditEvent({
+    tenant,
+    action: "recall_campaign.approval_failed",
     entityType: "RecallCampaign",
     metadata,
   });

@@ -1,6 +1,17 @@
 import type { RecallAction, RecallQueueItem, RecallStatus } from "@/modules/patients/recall";
 
 export type RecallCampaignChannel = "EMAIL" | "SMS" | "WHATSAPP" | "MANUAL";
+export type RecallCampaignStatus =
+  | "DRAFT"
+  | "IN_REVIEW"
+  | "APPROVED"
+  | "CANCELLED"
+  | "ACTIVE"
+  | "PAUSED"
+  | "COMPLETED"
+  | "ARCHIVED";
+
+export type CampaignStatusTransition = "submit_for_review" | "approve" | "cancel";
 
 export type RecallCampaignDraftInput = {
   name: string;
@@ -9,14 +20,26 @@ export type RecallCampaignDraftInput = {
   actorUserId: string;
 };
 
+export type RecallCampaignDraftUpdateInput = {
+  campaignId: string;
+  name: string;
+  channel: RecallCampaignChannel;
+  messageTemplate: string;
+  actorUserId: string;
+};
+
 export type RecallCampaignSummary = {
   id: string;
   tenantId: string;
   name: string;
-  status: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED" | "ARCHIVED";
+  status: RecallCampaignStatus;
   channel: RecallCampaignChannel;
   audienceCount: number;
+  messageTemplate?: string;
   templatePreview?: string;
+  submittedForReviewAt?: Date;
+  approvedAt?: Date;
+  cancelledAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -47,12 +70,37 @@ export type CampaignReadiness = {
   reviewRequired: number;
   selectedByDefaultCount: number;
   existingDraftCount: number;
+  inReviewCount: number;
+  approvedCount: number;
+};
+
+export type CampaignReviewState = {
+  campaign: RecallCampaignDetail;
+  canEditDraft: boolean;
+  canSubmitForReview: boolean;
+  canApprove: boolean;
+  canCancel: boolean;
+  noSendNotice: string;
 };
 
 export class CampaignAudienceValidationError extends Error {
   constructor(message = "Campaign audience is not valid for this tenant.") {
     super(message);
     this.name = "CampaignAudienceValidationError";
+  }
+}
+
+export class CampaignMessageValidationError extends Error {
+  constructor(message = "Campaign message template is not valid.") {
+    super(message);
+    this.name = "CampaignMessageValidationError";
+  }
+}
+
+export class CampaignStatusTransitionError extends Error {
+  constructor(message = "Campaign status transition is not allowed.") {
+    super(message);
+    this.name = "CampaignStatusTransitionError";
   }
 }
 
@@ -95,6 +143,14 @@ const campaignEligibleActions = new Set<RecallAction>([
   "call_to_schedule",
 ]);
 
+const editableCampaignStatuses = new Set<RecallCampaignStatus>(["DRAFT"]);
+const cancellableCampaignStatuses = new Set<RecallCampaignStatus>([
+  "DRAFT",
+  "IN_REVIEW",
+  "APPROVED",
+]);
+export const MAX_CAMPAIGN_MESSAGE_TEMPLATE_LENGTH = 600;
+
 export function isRecallCampaignChannel(value: string): value is RecallCampaignChannel {
   return allowedCampaignChannels.has(value as RecallCampaignChannel);
 }
@@ -104,6 +160,15 @@ export function normalizeCampaignName(value: FormDataEntryValue | string | null)
     .trim()
     .replace(/\s+/g, " ")
     .slice(0, 80);
+}
+
+export function normalizeCampaignMessageTemplate(
+  value: FormDataEntryValue | string | null,
+): string {
+  return String(value ?? "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .trim();
 }
 
 export function normalizeSelectedPatientIds(values: FormDataEntryValue[]): string[] {
@@ -150,6 +215,48 @@ export function isCampaignEligibleCandidate(candidate: RecallQueueItem): boolean
     candidate.status !== "scheduled" &&
     candidate.status !== "not_ready"
   );
+}
+
+export function assertValidCampaignMessageTemplate(messageTemplate: string): void {
+  if (!messageTemplate) {
+    throw new CampaignMessageValidationError("Message template is required.");
+  }
+
+  if (messageTemplate.length > MAX_CAMPAIGN_MESSAGE_TEMPLATE_LENGTH) {
+    throw new CampaignMessageValidationError(
+      `Message template must be ${MAX_CAMPAIGN_MESSAGE_TEMPLATE_LENGTH} characters or fewer.`,
+    );
+  }
+}
+
+export function canEditCampaignDraft(status: RecallCampaignStatus): boolean {
+  return editableCampaignStatuses.has(status);
+}
+
+export function canSubmitCampaignForReview(status: RecallCampaignStatus): boolean {
+  return status === "DRAFT";
+}
+
+export function canApproveCampaign(status: RecallCampaignStatus): boolean {
+  return status === "IN_REVIEW";
+}
+
+export function canCancelCampaign(status: RecallCampaignStatus): boolean {
+  return cancellableCampaignStatuses.has(status);
+}
+
+export function validateCampaignCanTransition(
+  status: RecallCampaignStatus,
+  transition: CampaignStatusTransition,
+): void {
+  const allowed =
+    (transition === "submit_for_review" && canSubmitCampaignForReview(status)) ||
+    (transition === "approve" && canApproveCampaign(status)) ||
+    (transition === "cancel" && canCancelCampaign(status));
+
+  if (!allowed) {
+    throw new CampaignStatusTransitionError("Campaign status transition is not allowed.");
+  }
 }
 
 export function prepareCampaignPreview(input: {
