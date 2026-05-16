@@ -50,6 +50,8 @@ First clinic provisioning is available through a guarded CLI bootstrap only. It 
 - Keep invitation acceptance token validation, email match, tenant-derived membership creation, and no-PII audit metadata intact.
 - Keep route-level permission checks for doctors, receptionists, managers, and staff.
 - Preserve last-owner protection for every role management workflow.
+- Keep production dashboard pages from falling back to demo patient or recall records when persistence is unavailable.
+- Run `npm run tenant:validate` for tenant isolation, server action, invitation, audit, and demo fallback guardrail changes.
 - Enable branch protection with required CI, CodeQL, Semgrep, secret scanning, and review.
 - Configure production secrets through the deployment platform, not Git.
 - Review security headers and move CSP from report-only to enforced mode after validation.

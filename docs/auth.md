@@ -51,6 +51,8 @@ If a signed-in provider user is not provisioned in `User` or has no `Membership`
 
 Users can have memberships in multiple tenants. The selected tenant ID is stored in an HTTP-only `klinika360_active_tenant` cookie. This cookie is a preference only; every request revalidates the selected tenant against the authenticated user's active memberships before tenant data is shown.
 
+The tenant switch server action requires `tenant:switch` on the current active membership before reading the requested tenant ID. The requested tenant is then validated against the authenticated user's active memberships before the cookie is changed. Invalid, stale, or deactivated memberships fail safely.
+
 If the selected tenant is invalid, the app falls back to the first valid membership. Development demo mode exposes two deterministic demo tenants so the switcher can be exercised locally.
 
 ## Staff Invitations
@@ -105,6 +107,10 @@ For local Google OAuth testing, configure real local development values for `AUT
 - Membership deactivation requires `membership:deactivate`.
 
 Server actions that write tenant-owned data must call `requirePermission()` before parsing or persisting input.
+
+Invitation acceptance requires authentication before the raw invitation token is read from the submitted form. The token is hashed and validated only on the server, while tenant ID and role are always derived from the invitation record.
+
+Patient and recall pages may use fake demo data only when local development demo auth is explicitly enabled. Production provider sessions never receive demo fallback records when persistence is unavailable.
 
 ## Intentionally Not Implemented Yet
 

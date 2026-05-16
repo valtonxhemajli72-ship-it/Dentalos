@@ -15,6 +15,7 @@ import {
   isDevelopmentAuthEnabled,
   requirePermission,
 } from "@/server/auth";
+import { DatabaseUnavailableError } from "@/server/db";
 import type { TenantContext } from "@/modules/tenants";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ const dateFormatter = new Intl.DateTimeFormat("en", {
 
 type PatientsPageData = {
   patients: PatientListItem[];
-  source: "database" | "demo";
+  source: "database" | "demo" | "unavailable";
   tenantName: string;
 };
 
@@ -163,7 +164,19 @@ async function getPatientsPageData(tenant: TenantContext): Promise<PatientsPageD
       source: "database",
       tenantName: tenant.tenantName ?? "Selected clinic",
     };
-  } catch {
+  } catch (error) {
+    if (!canUseDemoFallback(tenant)) {
+      if (error instanceof DatabaseUnavailableError) {
+        return {
+          patients: [],
+          source: "unavailable",
+          tenantName: tenant.tenantName ?? "Selected clinic",
+        };
+      }
+
+      throw error;
+    }
+
     return {
       patients: listDemoRecallCandidatesForTenant(tenant.tenantId).map(
         mapRecallPatientToPatientListItem,
@@ -172,6 +185,10 @@ async function getPatientsPageData(tenant: TenantContext): Promise<PatientsPageD
       tenantName: tenant.tenantName ?? "Selected clinic",
     };
   }
+}
+
+function canUseDemoFallback(tenant: TenantContext): boolean {
+  return isDevelopmentAuthEnabled() && isDemoTenantContext(tenant);
 }
 
 function formatDate(date: Date | undefined): string {

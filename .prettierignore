@@ -4,3 +4,5 @@ out
 dist
 coverage
 package-lock.json
+.agents
+skills-lock.json

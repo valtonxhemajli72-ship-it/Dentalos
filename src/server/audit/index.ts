@@ -120,6 +120,8 @@ export function createAuditEventForTenant(input: {
 }
 
 export async function writeAuditEvent(db: AuditLogDatabase, event: AuditEvent): Promise<void> {
+  const metadata = sanitizeAuditMetadata(event.metadata);
+
   await db.auditLog.create({
     data: {
       tenantId: event.tenantId,
@@ -127,7 +129,7 @@ export async function writeAuditEvent(db: AuditLogDatabase, event: AuditEvent): 
       action: event.action,
       entityType: event.entityType,
       entityId: event.entityId,
-      metadata: event.metadata ?? {},
+      metadata,
       createdAt: event.createdAt,
     },
   });
