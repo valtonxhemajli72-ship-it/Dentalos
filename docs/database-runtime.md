@@ -34,6 +34,12 @@ Validate the schema without requiring a live database:
 npm run db:validate
 ```
 
+Validate the RLS readiness documentation and static schema guardrails without requiring a live database:
+
+```bash
+npm run rls:validate
+```
+
 ## Seed Data
 
 `npm run db:seed` runs `scripts/seed-demo-data.mjs`. The seed creates:
@@ -80,5 +86,7 @@ This is destructive. Confirm `DATABASE_URL` points to the local Docker database 
 ## Future Environments
 
 Staging and production database setup should use managed PostgreSQL with least-privilege credentials, automated migrations through deployment controls, monitoring, backups, and point-in-time recovery. Connection pooling with PgBouncer or a managed pooler should be introduced when connection pressure grows.
+
+PostgreSQL Row-Level Security is planned but not enabled yet. RLS rollout should first add tenant consistency checks and staging policies, then test Prisma behavior with the intended pooler. Tenant context should be set transaction-locally, for example with `set_config('app.current_tenant_id', tenantId, true)`, so pooled connections cannot retain a previous request's tenant.
 
 Production backups, restore testing, PITR, data residency, and tenant offboarding procedures are future operational requirements. Do not claim compliance until legal, security, and operational review are complete.

@@ -169,8 +169,9 @@ Stage the database path:
 2. Add indexes for tenant-scoped reads, duplicate checks, due-date lists, status filters, and job scans.
 3. Add PgBouncer or equivalent connection pooling when Next.js concurrency and worker processes increase connection pressure.
 4. Add read replicas only for reporting or read-heavy workloads that can tolerate replication lag.
-5. Add PostgreSQL Row-Level Security for defense in depth.
-6. Consider schema-per-tenant or database-per-tenant only for paid enterprise or contractual needs.
+5. Add tenant consistency constraints and validate PostgreSQL Row-Level Security in staging.
+6. Add PostgreSQL Row-Level Security for defense in depth after application-layer authorization remains intact.
+7. Consider schema-per-tenant or database-per-tenant only for paid enterprise or contractual needs.
 
 Build and typecheck must not require a live database.
 
@@ -183,7 +184,7 @@ PgBouncer or equivalent pooling becomes important when:
 - Imports, campaigns, or reporting increase concurrent database work.
 - RDS or the chosen PostgreSQL provider approaches safe connection limits.
 
-When introduced, test Prisma compatibility, transaction behavior, prepared statement settings, and migration workflows before production use.
+When introduced, test Prisma compatibility, transaction behavior, prepared statement settings, RLS tenant context handling, and migration workflows before production use. Future RLS must set tenant context transaction-locally so pooled connections do not leak one tenant's setting into another request.
 
 ## Tenant Isolation Implications
 

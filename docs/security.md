@@ -32,6 +32,10 @@ The application security target is OWASP ASVS Level 2. This is a design target, 
 - Background jobs, events, and notifications must include tenant context.
 - Cross-tenant support access requires explicit authorization and audit logging.
 - Next isolation step is PostgreSQL Row-Level Security. Schema-per-tenant and database-per-tenant are later tier options, not current implementation.
+- RLS is planned as database-level defense-in-depth, not a replacement for application-layer auth, membership checks, RBAC, input validation, or tenant-scoped repositories.
+- Current tenant IDs are Prisma string/CUID values, so future RLS policy examples must compare string tenant IDs unless a later migration changes tenant IDs to UUIDs.
+- Tenant-owned child relationships should move toward composite tenant constraints before RLS is enabled, for example child `(tenantId, patientId)` references parent `(tenantId, id)`.
+- Connection pooling must use transaction-local tenant context for RLS. Do not rely on connection-level tenant settings that can leak across PgBouncer or managed pooler connections.
 
 ## Auth and RBAC Baseline
 
@@ -92,6 +96,7 @@ Production dashboard routes must not substitute demo patient or recall records w
 
 - GitHub CI should run lint, typecheck, formatting checks, Prisma validation, build, and high-severity dependency audit.
 - `npm run tenant:validate` statically checks tenant security guardrails without requiring a live database.
+- `npm run rls:validate` statically checks RLS readiness documentation and obvious schema guardrails without requiring a live database.
 - CodeQL, Semgrep, and secret scanning are configured as baseline workflows.
 - Dependabot should open weekly grouped updates for npm and GitHub Actions.
 - Branch protection should require CI, review, and security-sensitive owner review before production use.

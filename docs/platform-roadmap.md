@@ -12,6 +12,7 @@ This roadmap preserves enterprise architecture decisions without installing heav
 - `tenantId` on tenant-owned models.
 - Membership connects users to tenants and roles.
 - Tenant-owned queries require tenant context.
+- PostgreSQL RLS is documented as a future defense-in-depth layer and is not enabled yet.
 - Patient import, patient list, and recall review use tenant-scoped persistence when a database is configured.
 - Local/demo mode can fall back safely when database access is unavailable.
 - A NextAuth/Auth.js-compatible auth and RBAC boundary exists with Google OAuth as the first real provider path.
@@ -46,7 +47,7 @@ These are planned capabilities, not active dependencies or deployed services.
 ## What We Implement Later
 
 - Invitation email delivery, staff provisioning polish, and more enterprise auth options on top of the current auth/RBAC boundary.
-- PostgreSQL Row-Level Security for shared-schema tenant isolation.
+- Tenant consistency constraints and PostgreSQL Row-Level Security for shared-schema defense-in-depth.
 - Durable workflow engine once recall campaigns and onboarding/offboarding workflows become long-running.
 - CDC and analytical warehouse once operational reporting exceeds transactional database needs.
 - Metrics, dashboards, alerts, and tenant-level SLA views.
@@ -96,9 +97,10 @@ Stage 4:
 ## Tenant Isolation Stages
 
 1. MVP: shared schema, shared PostgreSQL database, `tenantId` on tenant-owned rows, and tenant-scoped repositories.
-2. Next: PostgreSQL Row-Level Security for defense-in-depth in the shared schema.
-3. Later: optional schema-per-tenant for mid-market tenants if data volume, operational support, or contractual needs justify it.
-4. Later: optional database-per-tenant for enterprise tenants that pay for stronger isolation or require dedicated operations.
+2. Next: tenant consistency constraints, tenant-scoped indexes, and staging validation for PostgreSQL Row-Level Security.
+3. Then: PostgreSQL Row-Level Security for defense-in-depth in the shared schema after application-layer authorization remains in place.
+4. Later: optional schema-per-tenant for mid-market tenants if data volume, operational support, or contractual needs justify it.
+5. Later: optional database-per-tenant for enterprise tenants that pay for stronger isolation or require dedicated operations.
 
 PgBouncer or another connection pooling strategy may be needed as tenant count and server concurrency grow.
 
@@ -121,7 +123,8 @@ Do not use CDC or analytics pipelines for raw patient PII unless a reviewed priv
 ## Security And Policy Roadmap
 
 - Now: tenant helper functions, NextAuth-backed auth/RBAC boundary, audit metadata checks, security review docs, and local policy interface.
-- Next: staff provisioning polish, notification-backed invitation delivery, and PostgreSQL RLS.
+- Next: staff provisioning polish, notification-backed invitation delivery, tenant consistency constraints, and PostgreSQL RLS readiness validation.
+- Later: PostgreSQL RLS after staging tests prove transaction-local tenant context, policy behavior, and pooling compatibility.
 - Later: OPA policy-as-code for complex enterprise policies.
 - Later: Falco for Kubernetes/container runtime security.
 - Later: cert-manager and External Secrets Operator for Kubernetes TLS and secret delivery.
@@ -190,9 +193,10 @@ Offboarding is not implemented yet.
 - Temporal, Kafka, Debezium, ClickHouse, OPA, Unleash, OpenMeter, Falco, Chaos Mesh, cert-manager, External Secrets Operator, Prometheus, or Grafana.
 - Kubernetes manifests or active deployment configuration for advanced services.
 - PostgreSQL Row-Level Security.
+- Tenant consistency composite foreign keys.
 - Schema-per-tenant or database-per-tenant.
 - Regional infrastructure boundaries.
 - Tenant onboarding/offboarding automation.
 - SLA dashboards or promised SLA tiers.
 - Redis, queues, workers, a dedicated backend API, or API gateway.
-- Real SMS, email, WhatsApp, payment, tenant switching, staff invitation, password auth, SSO/SAML, or OpenAI calls.
+- Real SMS, email, WhatsApp, payment, password auth, SSO/SAML, or OpenAI calls.
