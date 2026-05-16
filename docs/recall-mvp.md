@@ -11,9 +11,11 @@ The recall MVP adds the first operational wedge inside DentalOS: a prioritized q
 - Import readiness indicators from the tenant-scoped patient import persistence flow.
 - Database-backed recall candidates when `DATABASE_URL` is configured, with demo fallback for local unavailable database scenarios.
 - A recall campaign builder route at `/dashboard/recall/campaigns/new` that saves tenant-owned campaign drafts when the database is configured.
+- A campaign review route at `/dashboard/recall/campaigns/[campaignId]` for draft edits, review submission, approval, and cancellation.
 - Campaign draft persistence through `RecallCampaign` and `RecallCampaignPatient`, with selected patients revalidated against the active tenant before write.
+- Campaign statuses for the no-send workflow: `DRAFT`, `IN_REVIEW`, `APPROVED`, and `CANCELLED`.
 
-The UI uses masked patient labels and does not send messages. That is intentional until authentication, tenant resolution, approval flows, workers, and notification provider adapters exist.
+The UI uses masked patient labels and does not send messages. That is intentional until worker boundaries and notification provider adapters exist.
 
 ## Product Rules
 
@@ -23,12 +25,15 @@ The UI uses masked patient labels and does not send messages. That is intentiona
 - Patients who opted out or are inactive are not eligible for automated outreach.
 - Phone-preferred overdue patients are routed to manual review.
 - Campaign builder channels are placeholders for SMS, email, WhatsApp, and manual calls; they do not trigger outbound delivery.
-- Audit metadata for campaign drafts stores counts, status, channel, and campaign IDs only.
+- Only `DRAFT` campaigns can edit the generic message template.
+- `IN_REVIEW` and `APPROVED` campaigns lock message editing. Approval records readiness only and does not send.
+- Campaign preparation requires `campaign:prepare`; approval requires `campaign:approve`.
+- Audit metadata for campaign drafts and approval steps stores counts, status, channel, campaign IDs, and flags only.
+- Raw message content, patient names, patient emails, patient phones, and selected patient ID lists do not belong in audit metadata.
 
 ## Next Implementation Steps
 
-1. Add campaign approval and review states on top of the no-send draft foundation.
-2. Add safe message editing rules that avoid patient PII in audit metadata.
-3. Add worker-backed preparation for large audiences.
-4. Add notification provider adapters only after approval workflows are in place.
-5. Add delivery audit events and operational dashboards without message bodies or patient contact details.
+1. Add worker-backed preparation for large audiences.
+2. Add notification provider adapters only after the no-send approval workflow is validated.
+3. Add delivery audit events and operational dashboards without message bodies or patient contact details.
+4. Add approval return-to-draft or reviewer notes if clinic workflow feedback shows it is needed.

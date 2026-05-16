@@ -69,6 +69,17 @@ const actionLabels: Record<RecallAction, string> = {
   wait: "Wait",
 };
 
+const campaignStatusLabels: Record<string, string> = {
+  DRAFT: "Draft",
+  IN_REVIEW: "In review",
+  APPROVED: "Approved",
+  CANCELLED: "Cancelled",
+  ACTIVE: "Active",
+  PAUSED: "Paused",
+  COMPLETED: "Completed",
+  ARCHIVED: "Archived",
+};
+
 export default async function RecallDashboardPage() {
   let tenant: TenantContext;
 
@@ -253,23 +264,34 @@ export default async function RecallDashboardPage() {
           </Card>
 
           <Card>
-            <h2 className="text-base font-semibold text-ink">Saved drafts</h2>
+            <h2 className="text-base font-semibold text-ink">Campaign review queue</h2>
             <p className="mt-3 text-2xl font-semibold text-brand-700">
-              {data.campaignReadiness.existingDraftCount}
+              {data.campaignReadiness.existingDraftCount +
+                data.campaignReadiness.inReviewCount +
+                data.campaignReadiness.approvedCount}
             </p>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Drafts are internal planning records. No delivery is triggered.
+              Draft, review, and approval records are internal. No delivery is triggered.
             </p>
             {data.campaignDrafts.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {data.campaignDrafts.map((draft) => (
-                  <div key={draft.id} className="rounded-md border border-line bg-surface p-3">
-                    <p className="text-sm font-semibold text-ink">{draft.name}</p>
+                  <Link
+                    key={draft.id}
+                    href={`/dashboard/recall/campaigns/${draft.id}`}
+                    className="block rounded-md border border-line bg-surface p-3 transition hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-semibold text-ink">{draft.name}</p>
+                      <span className="rounded bg-white px-2 py-1 text-xs font-semibold text-muted">
+                        {campaignStatusLabels[draft.status] ?? draft.status}
+                      </span>
+                    </div>
                     <p className="mt-1 text-xs text-muted">
                       {draft.audienceCount} patients - {draft.channel} -{" "}
                       {dateFormatter.format(draft.createdAt)}
                     </p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : null}
@@ -314,10 +336,13 @@ type RecallPageData = {
   campaignReadiness: {
     existingDraftCount: number;
     selectedByDefaultCount: number;
+    inReviewCount: number;
+    approvedCount: number;
   };
   campaignDrafts: Array<{
     id: string;
     name: string;
+    status: string;
     channel: string;
     audienceCount: number;
     createdAt: Date;
@@ -378,10 +403,13 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
       campaignReadiness: {
         existingDraftCount: campaignReadiness.existingDraftCount,
         selectedByDefaultCount: campaignReadiness.selectedByDefaultCount,
+        inReviewCount: campaignReadiness.inReviewCount,
+        approvedCount: campaignReadiness.approvedCount,
       },
       campaignDrafts: campaignDrafts.map((draft) => ({
         id: draft.id,
         name: draft.name,
+        status: draft.status,
         channel: draft.channel,
         audienceCount: draft.audienceCount,
         createdAt: draft.createdAt,
@@ -404,6 +432,8 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
           campaignReadiness: {
             existingDraftCount: 0,
             selectedByDefaultCount: 0,
+            inReviewCount: 0,
+            approvedCount: 0,
           },
           campaignDrafts: [],
         };
@@ -432,6 +462,8 @@ async function getRecallPageData(tenant: TenantContext): Promise<RecallPageData>
         selectedByDefaultCount: demoSnapshot.queue.filter((candidate) =>
           ["send_recall_message", "send_gentle_nudge"].includes(candidate.recommendedAction),
         ).length,
+        inReviewCount: 0,
+        approvedCount: 0,
       },
       campaignDrafts: [],
     };

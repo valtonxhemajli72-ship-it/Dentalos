@@ -179,7 +179,7 @@ export function RecallCampaignBuilderForm({
                       {candidate.recommendedActionLabel}. {candidate.riskNote}
                     </span>
                     <span className="mt-1 block text-xs text-muted">
-                      {candidate.dueLabel} · {candidate.dueDistance} · {candidate.preferredChannel}
+                      {candidate.dueLabel} - {candidate.dueDistance} - {candidate.preferredChannel}
                     </span>
                   </span>
                   <span className="text-left text-sm font-semibold text-ink sm:text-right">
@@ -222,7 +222,7 @@ export function RecallCampaignBuilderForm({
           <h2 className="text-base font-semibold text-ink">Review before save</h2>
           <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
             <li>Audience is revalidated against the current tenant on submit.</li>
-            <li>Campaign status is saved as DRAFT.</li>
+            <li>Campaign status is saved as DRAFT before review.</li>
             <li>No SMS, email, WhatsApp, or phone delivery is triggered.</li>
             <li>Audit metadata records counts, status, and channel only.</li>
           </ul>

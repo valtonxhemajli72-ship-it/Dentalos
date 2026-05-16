@@ -100,7 +100,8 @@ For local Google OAuth testing, configure real local development values for `AUT
 - Patient list pages require `patient:read`.
 - Patient import pages and server actions require `patient:import`.
 - Recall review requires `recall:read`.
-- Campaign preparation checks `campaign:prepare`.
+- Campaign preparation and review submission check `campaign:prepare`.
+- Campaign approval checks `campaign:approve` and is limited to Owner, Admin, and Manager roles.
 - Team settings require `user:read`.
 - Invitations require `invitation:create` or `invitation:revoke`.
 - Role updates require `membership:update`.

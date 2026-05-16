@@ -57,6 +57,17 @@ const actionLabels: Record<RecallAction, string> = {
   wait: "Wait",
 };
 
+const campaignStatusLabels: Record<string, string> = {
+  DRAFT: "Draft",
+  IN_REVIEW: "In review",
+  APPROVED: "Approved",
+  CANCELLED: "Cancelled",
+  ACTIVE: "Active",
+  PAUSED: "Paused",
+  COMPLETED: "Completed",
+  ARCHIVED: "Archived",
+};
+
 export default async function NewRecallCampaignPage() {
   let tenant: TenantContext;
 
@@ -144,13 +155,16 @@ export default async function NewRecallCampaignPage() {
         <section className="px-6 pb-6 lg:px-8">
           <div className="rounded-lg border border-line bg-white">
             <div className="border-b border-line px-5 py-4">
-              <h2 className="text-base font-semibold text-ink">Recent campaign drafts</h2>
-              <p className="mt-1 text-sm text-muted">Drafts are tenant-owned and no-send.</p>
+              <h2 className="text-base font-semibold text-ink">Recent campaigns</h2>
+              <p className="mt-1 text-sm text-muted">
+                Campaign records are tenant-owned and no-send.
+              </p>
             </div>
             <div className="divide-y divide-line">
               {data.drafts.map((draft) => (
-                <div
+                <Link
                   key={draft.id}
+                  href={`/dashboard/recall/campaigns/${draft.id}`}
                   className="grid gap-2 px-5 py-4 text-sm sm:grid-cols-[minmax(0,1fr)_120px_100px]"
                 >
                   <div>
@@ -160,8 +174,10 @@ export default async function NewRecallCampaignPage() {
                     </p>
                   </div>
                   <p className="font-semibold text-ink">{draft.audienceCount} patients</p>
-                  <p className="text-muted">{draft.channel}</p>
-                </div>
+                  <p className="text-muted">
+                    {draft.channel} - {campaignStatusLabels[draft.status] ?? draft.status}
+                  </p>
+                </Link>
               ))}
             </div>
           </div>
@@ -188,6 +204,7 @@ type CampaignBuilderPageData = {
   drafts: Array<{
     id: string;
     name: string;
+    status: string;
     channel: string;
     audienceCount: number;
     createdAt: Date;
@@ -218,6 +235,7 @@ async function getCampaignBuilderPageData(tenant: TenantContext): Promise<Campai
       drafts: drafts.map((draft) => ({
         id: draft.id,
         name: draft.name,
+        status: draft.status,
         channel: draft.channel,
         audienceCount: draft.audienceCount,
         createdAt: draft.createdAt,
